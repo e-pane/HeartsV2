@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearts Login</title>
+<script defer src="login.bundle.js"></script></head>
+<body>
+  <main class="login-container">
+    <div class="logo"></div>
+    <h1>Old School Hearts</h1>
+
+    <form id="login-form">
+      <div class="custom-select-wrapper">
+        <button type="button" class="custom-select-btn">Select your name</button>
+        <ul class="custom-select-options hidden">
+          <li>Nick</li>
+          <li>Lipper</li>
+          <li>Nepper</li>
+          <li>E</li>
+          <li>Coach</li>
+          <li>G</li>
+          <li>Asch</li>
+        </ul>
+        <!-- hidden input for form submission -->
+        <input type="hidden" name="player-name" id="player-name-hidden" required>
+      </div>
+
+      <input type="password" id="access-code" placeholder="Access code" required>
+      <button id="join-btn" type="submit">Join Game</button>
+    </form>
+
+    <p id="error-msg" class="hidden"></p>
+
+    <img src="/images/Tree1.png" class="floating-img tree1" alt="Tree 1">
+    <img src="/images/Tree2.png" class="floating-img tree2" alt="Tree 2">
+    <img src="/images/Tree3.png" class="floating-img tree3" alt="Tree 3">
+    <img src="/images/Tree4.png" class="floating-img tree4" alt="Tree 4">
+    <img src="/images/broken-heart.png" class="floating-img broken-heart">
+    <img src="/images/last-trick.png" class="floating-img last-trick">
+  </main>
+
+</body>
+</html>

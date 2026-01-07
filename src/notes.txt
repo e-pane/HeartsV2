@@ -1,0 +1,69 @@
+ if (friends.includes(playerName)) {
+    errorMsg.textContent = `${playerName} is already logged in.`;
+    errorMsg.classList.remove("hidden");
+    return;
+  }
+
+      errorMsg.classList.add("hidden");
+    const formCreds = { name: playerName, accessCode, socketId };
+    fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formCreds),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          localStorage.setItem("playerName", data.name);
+          socket.emit("loginSocket", data.name);
+          window.location.href = "/index.html";
+        } else {
+          errorMsg.textContent = data.error || "Login failed";
+          errorMsg.classList.remove("hidden");
+        }
+      })
+      .catch(() => {
+        errorMsg.textContent = "Network error, try again.";
+        errorMsg.classList.remove("hidden");
+      });
+  } else {
+    errorMsg.textContent = "Seriously, Gourdhead? 🎃";
+    errorMsg.classList.remove("hidden");
+  }
+});
+
+  // Click on slot to return to hand
+  function setUpSlotClicks() {
+    const slots = document.querySelectorAll(".pass-slot");
+    slots.forEach((slot) => {
+      slot.addEventListener("click", () => {
+        const img = slot.querySelector("img");
+        console.log("Clicked slot img:", img.dataset.rank, img.dataset.suit);
+        if (!img) return; // nothing to return
+
+        // Extract rank and suit from img dataset or filename
+        const rank = img.dataset.rank;
+        const suit = img.dataset.suit;
+
+        console.log("Before returning card:", player.getHand().getCards());
+
+        // Add back to hand
+        const hand = player.getHand().getCards();
+        hand.push({
+          rank,
+          suit,
+          svg: `${rank}${suit}.svg`,
+          faceUp: true,
+          inTrick: false,
+          playable: true,
+        });
+
+        console.log("After returning card:", hand);
+        
+        hand.sort(cardComparer);
+
+        slot.innerHTML = "";
+
+        renderHand();
+      });
+    });

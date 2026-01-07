@@ -1,0 +1,1 @@
+export const friends = ["Nick", "Lipper", "Nepper", "E", "Coach", "G", "Asch"];

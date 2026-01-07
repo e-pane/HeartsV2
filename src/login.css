@@ -1,0 +1,198 @@
+@font-face {
+  font-family: 'SourceSans3';
+  src: url('./fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;  
+}
+
+@font-face {
+  font-family: 'SourceSans3';
+  src: url('./fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;  
+}
+
+body {
+  position: relative; /* needed for absolute children */
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+}
+
+.login-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  font-family: "SourceSans3";
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  position: relative; /* for floating images */
+  overflow: hidden;
+}
+
+.login-container .logo {
+  position: absolute;
+  top: 50%;
+  left: calc(35% - 300px);
+  width: 200px;
+  height: 200px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.login-container h1 {
+  font-size: 3rem;
+  margin-bottom: 40px;
+  font-family:"SourceSans3";
+}
+
+#login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 300px;
+}
+
+#login-form input, #login-form select {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1.2rem;
+}
+
+#login-form button {
+  padding: 10px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #152eff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+#access-code {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+#login-form button:hover {
+  background-color: #0016b3;
+}
+
+#error-msg {
+  margin-top: 20px;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  background-color: white;
+  border: 2px solid #8C1515;
+  border-radius: 10px;
+  padding: 5px;
+  color: #8C1515;
+}
+
+.hidden {
+  display: none;
+}
+
+.custom-select-wrapper {
+  position: relative;
+  width: 300px;
+}
+
+.custom-select-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  background-color: #152eff;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  position: relative;
+}
+
+.custom-select-btn::after {
+  content: "▾";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.custom-select-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+  background-color: #152eff;
+  z-index: 10;
+}
+
+.custom-select-options li {
+  padding: 12px;
+  font-size: 2rem;
+  cursor: pointer;
+  will-change: background-color;
+  transition: background-color 0.2s;
+  transform: translateZ(0);
+}
+
+.custom-select-options li:nth-child(odd) {
+  background-color: #e0d7e7; /* very light grayish-pink */
+  color: #333; /* dark text for readability */
+}
+
+.custom-select-options li:nth-child(even) {
+  background-color: #d0c0d8; /* slightly darker pink/gray */
+  color: #333;
+}
+
+.custom-select-options li:nth-child(odd):hover {
+  background-color: #c8badb; /* slightly darker pinkish-gray */
+}
+
+.custom-select-options li:nth-child(even):hover {
+  background-color: #b8a7cb; /* slightly darker for even rows */
+}
+
+.hidden {
+  display: none;
+}
+
+/* Floating images scattered around the page */
+.floating-img {
+  position: absolute;
+  width: 300px;   /* or whatever size you like */
+  height: 300px;
+  object-fit: contain; /* preserve aspect ratio */
+  pointer-events: none;
+  transition: transform 0.3s;
+}
+
+.tree1 { top: 5%; left: 15%; transform: rotate(15deg); }
+.tree2 { top: 50%; left: 70%; transform: rotate(10deg); }
+.tree3 { top: 20%; left: 80%; transform: rotate(-20deg); }
+.tree4 { top: 60%; left: 18%; transform: rotate(-15deg); }
+.broken-heart { top: 3%; left: 50%; transform: rotate(-5deg); }
+.last-trick { top: 8%; left: 60%; transform: rotate(12deg); }
+

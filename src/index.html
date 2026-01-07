@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Old School Hearts</title>
+
+</head>
+<body>
+  <div class="background-wrapper"></div>
+
+  <main class="game-layout">
+    <!-- TOP SECTION -->
+    <div class="top-section">
+      <div class="top-content">
+    
+        <div class="glow-container" id="glow3">
+          <div class="player-block horizontal">
+            <div class="player-row" id="player3-row">
+              <img id="Tree1" class="player-image">
+              <div class="opponent-hand" id="hand3"></div>
+            </div>
+            <div class="player-name" id="player3"></div>
+          </div>
+        </div>
+    
+        <div class="top-buttons">
+          <button class="broken-heart">
+            <img height="100px" width="100px" alt="Broken Heart">
+          </button>
+          <button class="last-trick">
+            <img height="100px" width="100px" alt="Last Trick">
+          </button>
+        </div>
+    
+        <div id="pass-message-container"></div>
+    
+      </div>
+    </div>
+
+    <!-- MIDDLE SECTION -->
+    <div class="middle-section">
+      <div class="middle-left">
+        <div class="left-content">
+
+          <div class="glow-container" id="glow2">
+            <div class="player-block horizontal">
+              <div class="player-row">
+                <img id="Tree2" class="player-image">
+                <div class="opponent-hand" id="hand2"></div>
+              </div>
+              <div class="player-name" id="player2"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    
+      <div class="middle-center">
+        <div class="play-area">
+          <div class="played-cards">
+            <div id="played1" class="played-card-slot"></div> <!-- player1 -->
+            <div id="played2" class="played-card-slot"></div> <!-- player2 -->
+            <div id="played3" class="played-card-slot"></div> <!-- player3 -->
+            <div id="played4" class="played-card-slot"></div> <!-- player4 -->
+          </div>
+          <div id="play-pass-ui"></div>
+        </div>
+      </div>
+    
+      <div class="middle-right">
+        <div class="right-content">
+
+          <div class="glow-container" id="glow4">
+            <div class="player-block horizontal">
+              <div class="player-row" id="player4-row">
+                <img id="Tree3" class="player-image">
+                <div class="opponent-hand" id="hand4"></div>
+              </div>
+              <div class="player-name" id="player4"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM SECTION -->
+    <div class="bottom-section">
+      <div class="bottom-content">
+        <div class="bottom-top">
+
+          <div class="glow-container" id="glow1">
+            <div class="player-block">
+              <img class="player-image" id="Tree4" alt="Stanford Tree">
+              <div class="player-name" id="player1"></div>
+            </div>
+          </div>
+            
+        </div>
+
+        <div class="bottom-lower">
+
+        </div>
+      </div>
+    </div>
+
+    <img  alt="Logo" class="logo">
+
+    <table class="score-table">
+        <tr>
+            <th>Player 1</th>
+            <th>Player 2</th>
+            <th>Player 3</th>
+            <th>Player 4</th>
+        </tr>
+        <tr>
+            <td id="score1">0</td>
+            <td id="score2">0</td>
+            <td id="score3">0</td>
+            <td id="score4">0</td>
+        </tr>
+    </table>
+  </main>
+</body>
+
+
+
+
+
+
+
+
+
+
+

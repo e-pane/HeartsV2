@@ -1,0 +1,113 @@
+/* Highlight player whose turn it is */
+.glow-highlight-pulse {
+    box-shadow: 0 0 20px 5px gold;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 10px 2px gold; }
+    50% { box-shadow: 0 0 20px 5px gold; }
+    100% { box-shadow: 0 0 10px 2px gold; }
+}
+
+/* Played cards area */
+.play-area {
+        position: relative;       /* needed for absolute positioning slots later */
+        height: 300px;            
+        width: 100%;                         /* space between cards */
+}
+
+.played-card {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.played-card.vertical {
+    transform: rotate(0deg);   /* no rotation */
+}
+
+.played-card.horizontal {
+    transform: rotate(90deg);  /* rotate 90deg */
+    /* optionally scale to fit slot better */
+    /* scale if needed: transform: rotate(90deg) scale(0.9); */
+    transform-origin: center center;
+}
+.played-card-slot {
+    width: 140px;
+    height: 210px;
+    position: absolute;
+}
+
+#played1 { bottom: -15px; left: 50%; transform: translateX(-50%) translateX(10px) translateY(10px); } /* player1 - bottom center */
+#played2 { top: 40%; left: 20%; transform: translateY(-50%); }   
+#played3 { top: -30%; left: 51%; transform: translateX(-50%); }     /* player3 - top center */
+#played4 { top: 40%; left: 65%; transform: translateY(-50%); } 
+
+
+/* Tricks text styling */
+.tricks {
+    color: white; 
+    font-size: 1.5rem;
+    font-family: "SourceSans3";
+}
+
+/* Bottom-lower hand layout and fan */
+.bottom-lower .card {
+    width: 150px;
+    height: 300px;
+    transform-origin: bottom center;
+    transition: transform 0.3s;
+    border-radius: 10px;
+    margin-left: -75px; 
+    cursor: pointer; 
+}
+
+/* Smooth concave fan for 13 cards */
+.bottom-lower .card:nth-child(1)  { transform: rotate(-18deg) translateY(66px); }
+.bottom-lower .card:nth-child(2)  { transform: rotate(-15deg) translateY(46px); }
+.bottom-lower .card:nth-child(3)  { transform: rotate(-12deg) translateY(29px); }
+.bottom-lower .card:nth-child(4)  { transform: rotate(-9deg)  translateY(16px); }
+.bottom-lower .card:nth-child(5)  { transform: rotate(-6deg)  translateY(6px); }
+.bottom-lower .card:nth-child(6)  { transform: rotate(-3deg)  translateY(1px); }
+.bottom-lower .card:nth-child(7)  { transform: rotate(0deg)   translateY(0px); }
+.bottom-lower .card:nth-child(8)  { transform: rotate(3deg)   translateY(3px); }
+.bottom-lower .card:nth-child(9)  { transform: rotate(6deg)   translateY(10px); }
+.bottom-lower .card:nth-child(10) { transform: rotate(9deg)   translateY(20px); }
+.bottom-lower .card:nth-child(11) { transform: rotate(12deg)  translateY(35px); }
+.bottom-lower .card:nth-child(12) { transform: rotate(15deg)  translateY(53px); }
+.bottom-lower .card:nth-child(13) { transform: rotate(18deg)  translateY(75px); }
+
+/* Score table styling */
+.score-table {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    border-collapse: collapse;
+    background-color: #F0F0F0;
+    z-index: 10;
+    border: 4px solid #ccac00; /* Rich gold border */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Lift off the felt with a stronger shadow */
+    border-radius: 20px; /* Slightly rounded corners */
+}
+
+.score-table th,
+.score-table td {
+    padding: 6px 10px;
+    width: 75px;
+    text-align: center;
+    padding: 10px 15px;
+    border: 1px solid #3d2f1f; /* A subtle, dark wood-like separator */
+    color: #333;
+    font-size: 1.5rem;
+    font-family: "SourceSans3";
+}
+
+.score-table th {
+    background-color: #f7e6a4;
+    color: #5d4037; /* A deep, rich brown for the text */
+    text-transform: uppercase;
+    font-family: 'SourceSans3';
+}

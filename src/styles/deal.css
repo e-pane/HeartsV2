@@ -1,0 +1,41 @@
+/* Deal button styling */
+#dealBtn {
+    font-size: 2.5rem;  /* bigger button text */
+    padding: 1rem 2rem; /* bigger button itself */
+    cursor: pointer;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: #C41E3A;
+    color: white;
+}
+
+.deal-btn {
+    background: linear-gradient(to bottom, #1E3A5F, #375A7A); /* deep cobalt blue */
+    color: #ffffff; /* bright white text */
+    font-size: 3rem; /* extra big text */
+    font-weight: bold;
+    padding: 1.5rem 3rem; /* larger clickable area */
+    border: none;
+    border-radius: 20px; /* more rounded corners */
+    box-shadow: 0 8px 0 #0f1f33, 0 12px 20px rgba(0,0,0,0.35); /* stronger 3D effect */
+    text-shadow: 0 2px 3px rgba(0,0,0,0.4); /* poppy text shadow */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1100; /* higher than the slots */
+}
+
+/* Hover effect for gloss / lift */
+.deal-btn:hover {
+    background: linear-gradient(to bottom, #375A7A, #1E3A5F);
+    transform: translate(-50%, -50%) translateY(-2px);
+    box-shadow: 0 8px 0 #0f1f33, 0 12px 20px rgba(0,0,0,0.4);
+}
+/* Active / pressed effect */
+.deal-btn:active {
+    transform: translate(-50%, -50%) translateY(2px);
+    box-shadow: 0 3px 0 #0f1f33, 0 5px 10px rgba(0,0,0,0.3);
+}

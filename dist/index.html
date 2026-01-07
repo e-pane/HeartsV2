@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Old School Hearts</title>
+
+<script defer src="game.bundle.js"></script></head>
+<body>
+  <div class="background-wrapper"></div>
+
+  <main class="game-layout">
+    <!-- TOP SECTION -->
+    <div class="top-section">
+      <div class="top-content">
+        <div class="player-block">
+            <img src="/images/Tree1.png" 
+                height="100px" width="100px" alt="Stanford Tree"
+                class="player-image" id="Tree1">
+            <div class="player-name">Player 1 - Tricks: 11</div>
+        </div>
+
+        <div class="top-buttons">
+            <button class="broken-heart">
+                <img src="/images/broken-heart.png" height="100px" width="100px" alt="Broken Heart">
+            </button>
+            <button class="last-trick">
+                <img src="/images/last-trick.png" height="100px" width="100px" alt="Last Trick">
+            </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MIDDLE SECTION -->
+    <div class="middle-section">
+      <div class="middle-left">
+        <div class="left-content">
+            <div class="player-block">
+                <img src="/images/Tree2.png"
+                    height="100px" width="100px" alt="Stanford Tree"
+                    class="player-image" id="Tree2"> 
+                <div class="player-name">Player 2 - Tricks: 1</div>
+            </div>
+        </div>
+      </div>
+
+      <div class="middle-center">
+        <div class="play-area">
+
+          <div id="pass-ui">
+            <!-- message will go here -->
+            <!-- pass slots will go here -->
+          </div>
+          <!-- Left horizontal placeholder -->
+          <img src="./images/svg-cards/1B.svg" class="card horizontal">
+
+          <!-- Vertical stack placeholder -->
+          <div class="vertical-stack">
+            <img src="./images/svg-cards/1B.svg" class="card vertical">
+            <img src="./images/svg-cards/1B.svg" class="card vertical">
+          </div>
+
+          <!-- Right horizontal placeholder -->
+          <img src="./images/svg-cards/1B.svg" class="card horizontal">
+        </div>
+      </div>
+
+      <div class="middle-right">
+        <div class="right-content">
+            <div class="player-block">
+                <img src="/images/Tree3.png"
+                    height="100px" width="100px" alt="Stanford Tree"
+                    class="player-image" id="Tree3">
+                <div class="player-name">Player 3 - Tricks: 0</div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM SECTION -->
+    <div class="bottom-section">
+      <div class="bottom-content">
+        <div class="bottom-top">
+            <div class="player-block">
+                <img src="/images/Tree4.png"
+                    class="player-image" id="Tree4" alt="Stanford Tree">
+                <div class="player-name"></div>
+            </div>
+            
+            <div class="tricks">
+                Tricks: 0
+            </div>
+        </div>
+
+        <div class="bottom-lower">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+            <img src="./images/svg-cards/1B.svg" class="card">
+        </div>
+      </div>
+    </div>
+
+    <img src="./images/stanford-logo.png" alt="Logo" class="logo">
+
+    <table class="score-table">
+        <tr>
+            <th>Player 1</th>
+            <th>Player 2</th>
+            <th>Player 3</th>
+            <th>Player 4</th>
+        </tr>
+        <tr>
+            <td id="score1">0</td>
+            <td id="score2">0</td>
+            <td id="score3">0</td>
+            <td id="score4">0</td>
+        </tr>
+    </table>
+  </main>
+</body>
+
+
+
+
+
+
+
+
+
+
+

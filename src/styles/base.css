@@ -1,0 +1,277 @@
+@font-face {
+    font-family: 'SourceSans3';
+    src: url("../fonts/SourceSans3-VariableFont_wght.ttf") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;  
+}
+  
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: transparent;
+}
+
+  /* background felt table image and positioning */
+.background-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("../images/card-table.jpg");
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+    background-color: #006030;
+    background-repeat: no-repeat;
+}
+/* Stanford center logo styling and positioning */
+.logo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    background-image: url("../images/stanford-logo.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transform: translate(-50%, -80%);
+    opacity: 0.4;   
+    pointer-events: none; 
+    z-index: -1;     
+}
+
+/* whole game-layout wrapper, flexing top, middle and bottom children vertically */
+.game-layout {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    z-index: 0;
+}
+
+.top-section { flex: 0 0 15%; display: flex; justify-content: center; align-items: center; padding-top: 10px; }
+.middle-section { flex: 0 0 45%; display: flex; width: 100%; }
+.bottom-section { flex: 0 0 40%; display: flex; justify-content: center; align-items: center; }
+
+
+.left-content,
+.right-content,
+.bottom-top
+{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+}
+
+.top-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;   /* left-align contents initially */
+    position: relative;            /* allow absolute positioning for buttons */
+    padding-left: calc(50% + 50px); /* move player + score ~200px right of center */
+}
+  
+.top-buttons button {
+    background: transparent;  /* remove any default button background */
+    border: none;             /* optional, to remove default button border */
+    padding: 0;
+    cursor: pointer;               
+}
+
+body, .top-section, .top-content {
+    background: transparent; /* allow PNG transparency to show */
+}
+
+.top-buttons {
+    display: flex;
+    gap: 20px;                     /* spacing between the buttons */
+    position: absolute;
+    right: 20px;                    /* margin from right edge */
+    top: 50%;                        /* vertical center relative to top-content */
+    transform: translateY(-50%);    /* exact vertical centering */
+}
+
+.player-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+.player-name {
+    margin-top: 5px;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 500;
+    font-family: "SourceSans3";
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+.player-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 5px solid white; 
+    border-radius: 8px;
+    box-shadow: 0 8px 30px 10px rgba(0, 0, 0, 0.3);
+}
+
+.score-box {
+    background-color: #152eff;
+    color: white;
+    font-size: 2rem;
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px 10px rgba(0, 0, 0, 0.3);
+}
+
+.top-content .broken-heart,
+.top-content .last-trick {
+    margin-left: auto;  /* takes all remaining space */
+    margin-right: 20px; /* spacing from the page edge */
+}
+
+
+.middle-left { flex: 0 0 22.5%; display: flex; justify-content: center; align-items: center; }
+.middle-center { flex: 0 0 55%; display: flex; justify-content: center; align-items: center; }
+.middle-right { flex: 0 0 22.5%; display: flex; justify-content: center; align-items: center; }
+
+.middle-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.middle-left .player-row {
+    gap: 46px; /* 16px + ~30px bump */
+}
+
+.middle-right .player-block {
+    margin-left: -75px;  /* negative margin moves it left */
+}
+
+.bottom-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+  
+.bottom-top {
+    display: flex;           /* arrange children horizontally */
+    align-items: center;     /* vertical alignment */
+    gap: 20px;               /* space between player block and tricks */
+    align-self: flex-start;  
+    margin-left: 1305px;     /* keep your existing left offset */
+    margin-top: -25px;
+}
+
+.bottom-lower {
+    display: flex;
+    justify-content: center; 
+    height: auto; 
+    position: absolute;
+    align-items: flex-start;          
+    width: 100%;             
+    padding: 0 100px;
+    transform: translateY(-50px);
+    overflow: visible;             
+}
+
+.bottom-lower .card,
+.pass-slot img.card-slot-image {
+    width: 150px;
+    height: 225px;
+    object-fit: contain;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.opponent-card {
+    width: 90px;    /* smaller symbolic card */
+    height: 135px;
+    object-fit: contain;
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+}
+
+.card {
+    object-fit: contain;        /* keep image fit */
+    transition: transform 0.3s ease;  /* smooth hover/animation */
+    border-radius: 10px;        /* optional if you want consistent rounding */
+}
+
+.played-card {
+    width: 90px;   /* small display by default */
+    height: 135px;
+    object-fit: contain;
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+}
+
+.opponent-card.vertical { transform: rotate(0deg); }
+.opponent-card.horizontal { transform: rotate(90deg); transform-origin: center center; }
+
+.played-card.vertical {
+    transform: rotate(0deg);
+}
+
+.played-card.horizontal {
+    transform: rotate(90deg);
+    transform-origin: center center;
+}
+  
+/* Row holding tree + opponent card */
+.player-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.player-row.reverse {
+    flex-direction: row-reverse;
+}
+
+#player3-row {
+    flex-direction: row-reverse; /* card to the left of the tree */
+    margin-left: -95px;          /* SHIFT ENTIRE BLOCK LEFT */
+}
+
+#player4-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;        /* space between tree and hand */
+    flex-direction: row-reverse;  /* hand now on left, tree on right */
+}
+
+.player-block.horizontal {
+  align-items: center;
+  gap: 16px;
+}
+
+/* Player 2: middle-left - card to the right of tree */
+#hand2 {
+    margin-left: 16px;  /* small gap */
+}
+
+/* Player 3: top - card to the left of tree */
+#hand3 {
+    margin-right: 16px; /* small gap */
+}
+
+/* Player 4: middle-right - card to the right of tree */
+#hand4 {
+    margin-right: 50px;  /* small gap */
+}
