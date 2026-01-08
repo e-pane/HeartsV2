@@ -175,6 +175,8 @@ export function createGameEngine(players) {
 
   engine.playCard = (player, card) => {
     if (!engine.canPlayCard(player, card)) return false;
+
+    _lastPlay = null;
     // Remove the card safely (mutate in place)
     player.getHand().removeCard(card);
     card._inTrick = true;
@@ -271,6 +273,8 @@ export function createGameEngine(players) {
   engine.areHeartsBroken = () => _heartsBroken;
 
   engine.canUndo = () => _lastPlay !== null;
+
+  engine.getLastPlay = () => _lastPlay;
 
   engine.undoLastPlay = () => {
     if (!_lastPlay) return false;

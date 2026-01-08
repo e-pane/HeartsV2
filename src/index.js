@@ -122,7 +122,11 @@ function handleOpponentPlay(playerIndex) {
   if (!cardToPlay) return;
 
   // UI: render the played card
-  renderPlayedCard(opponent, cardToPlay, players, handleUndoLastPlayed);
+  const plays = gameEngine.getCurrentTrick().getPlays();
+  plays.forEach(({ player, card }, i) => {
+    const isUndoable = i === plays.length - 1; // last card only
+    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
+  });
 
   // Re-render opponent hands symbolically (single card back)
   renderOpponentHands(handleOpponentPlay);
@@ -142,9 +146,12 @@ function handlePlayCard(player, card) {
 
   // Remove card from hand UI
   renderHand(players[0], handlePlayCard);
-
   // Render the played card in the play area
-  renderPlayedCard(player, card, players, handleUndoLastPlayed);
+  const plays = gameEngine.getCurrentTrick().getPlays();
+  plays.forEach(({ player, card }, i) => {
+    const isUndoable = i === plays.length - 1; // last card only
+    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
+  });
 
   if (gameEngine.isTrickComplete()) {
     gameEngine.completeTrick();
@@ -158,27 +165,21 @@ function handlePlayCard(player, card) {
 }
 // call back to renderPlayedCard() and moveCardToPlayArea()
 function handleUndoLastPlayed(player) {
-  console.log({
-    phase: gameEngine.getCurrentPhase?.(),
-    trickNumber: gameEngine.getCurrentTrick().getTrickNumber(),
-    lastPlay: gameEngine.getLastPlay?.(),
-  });
   const undone = gameEngine.undoLastPlay();
   if (!undone) return;
 
   gameEngine.setCurrentPlayer(player);
-  
+
   ["played1", "played2", "played3", "played4"].forEach((id) => {
     const slot = document.getElementById(id);
     if (slot) slot.innerHTML = "";
   });
 
-  gameEngine
-    .getCurrentTrick()
-    .getPlays()
-    .forEach(({ player, card }) => {
-      renderPlayedCard(player, card, players, handleUndoLastPlayed);
-    });
+  const plays = gameEngine.getCurrentTrick().getPlays();
+  plays.forEach(({ player, card }, i) => {
+    const isUndoable = i === plays.length - 1; // only last card
+    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
+  });
   
   renderHand(players[0], handlePlayCard);
   renderOpponentHands(handleOpponentPlay);
@@ -195,6 +196,8 @@ const players = loggedPlayerNames.map((name, index) =>
   createPlayer(name, index)
 );
 const gameEngine = createGameEngine(players);
+
+let undoableCardImg = null;
 
 if (loggedPlayerNames.length < 4) {
   renderWaitingMessage();

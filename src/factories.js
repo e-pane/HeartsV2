@@ -191,7 +191,11 @@ function createGame(players) {
   game.getPlayers = () => _engine.getPlayers();
   game.getCurrentPhase = () => _engine.getCurrentPhase();
   game.getSelectedCardsForPass = () => _engine.getSelectedCardsForPass();
+  game.getCurrentTrick = () => _engine.getCurrentTrick();
+  game.areHeartsBroken = () => _engine.areHeartsBroken();
   game.isTrickComplete = () => _engine.isTrickComplete();
+  game.isHandComplete = () => _engine.isHandComplete();
+  game.completeTrick = () => _engine.completeTrick();
   game.getScores = () => _engine.getScores();
   game.getTricksTaken = () => _engine.getTricksTaken();
   game.canUndo = () => _engine.canUndo();

@@ -1,3 +1,4 @@
+
 export function highlightCurrentPlayer(playerIndex) {
   const highlightGlow = "glow-highlight-pulse";
 
@@ -29,7 +30,7 @@ export function renderHand(player, onCardClick) {
       cardEl.dataset.suit = card.suit;
 
       cardEl.addEventListener("click", () => onCardClick(player, card));
-      
+
       handContainer.appendChild(cardEl);
     });
 }
@@ -63,19 +64,19 @@ export function renderOpponentHands(onOpponentClick) {
   });
 }
 
-export function renderPlayedCard(player, card, players, onUndoCard) {
+export function renderPlayedCard(player, card, players, onUndoCard, undoable = false) {
+  console.log("renderPlayedCard", card.rank + card.suit, "undoable:", undoable);
   const playerIndex = players.indexOf(player);
   if (playerIndex === -1) return;
 
-  moveCardToPlayArea(playerIndex, card, onUndoCard, player);
+  moveCardToPlayArea(playerIndex, card, onUndoCard, player, undoable);
 }
-
-export function moveCardToPlayArea(playerIndex, card, onUndoCard, player) {
+export function moveCardToPlayArea(playerIndex, card, onUndoCard, player, undoable = false) {
   const slotIds = ["played1", "played2", "played3", "played4"];
   const slot = document.getElementById(slotIds[playerIndex]);
   if (!slot) return;
 
-  slot.innerHTML = ""; 
+  slot.innerHTML = "";
 
   const img = document.createElement("img");
   img.src = `/images/svg-cards/${card.svg}`;
@@ -89,9 +90,8 @@ export function moveCardToPlayArea(playerIndex, card, onUndoCard, player) {
     img.classList.add("horizontal");
   }
 
-  if (onUndoCard) {
+  if (onUndoCard && undoable) {
     img.addEventListener("click", () => {
-      img.remove(); // remove from play area
       onUndoCard(player, card); // notify controller
     });
   }
