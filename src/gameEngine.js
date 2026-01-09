@@ -164,7 +164,7 @@ export function createGameEngine(players) {
   engine.isFirstTrick = () =>
     _currentTrick.getPlays().length === 0 && _currentPhase === "play";
 
-  engine.startPlayPhase = () => {
+  engine.enterPlayPhase = () => {
     _currentPhase = "play";
 
     const leadPlayerIndex = getPlayerWith2C();
@@ -348,6 +348,32 @@ export function createGameEngine(players) {
 
     // Hand is complete after trick #13
     return _currentTrick.getTrickNumber() > 13;
+  };
+
+  engine.finishHand = () => {
+    // 1️⃣ calculate scores for each player
+    _players.forEach(player => {
+        const tricksTaken = player.getTricks();
+        let handPoints = 0;
+        tricksTaken.forEach(trick => {
+            trick.getPlays().forEach(({card}) => {
+                if (card.suit === "H") handPoints += 1;
+                if (card.suit === "S" && card.rank === "Q") handPoints += 13;
+            });
+        });
+        player.incrementScore(handPoints);
+    });
+
+    // 2️⃣ clear tricks and reset hands for next hand
+    _players.forEach(player => {
+        player.setHand([]);
+        player.getTricks().length = 0; // reset tricks
+    });
+
+    _tricks = [];
+    _currentTrick = null;
+    _currentPlayerIndex = 0;
+    _currentPhase = "deal"; // ready for next hand
   };
 
   engine.getScores = () => _scores.slice();

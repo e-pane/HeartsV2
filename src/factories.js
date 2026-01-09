@@ -1,49 +1,53 @@
-// factory to create a 52 card deck as an array of 52 objects called deck. 
-function createDeck() {
-    let suits = ["C", "D", "S", "H"];
-    let ranks = [2, 3, 4, 5, 6, 7, 8, 9, "T", "J", "Q", "K", "A"];
-    let deck = [];
+import { createGameEngine } from "./gameEngine.js";
 
-    for (let suit of suits) {
-        for (let rank of ranks) {
-            let card = {
-                suit,
-                rank,
-                svg: `${rank}${suit}.svg`,
-                faceUp: false,
-                inTrick: false,
-                playable: true,
-            };
-            deck.push(card);
-        }
+// factory to create a 52 card deck as an array of 52 objects called deck.
+function createDeck() {
+  let suits = ["C", "D", "S", "H"];
+  let ranks = [2, 3, 4, 5, 6, 7, 8, 9, "T", "J", "Q", "K", "A"];
+  let deck = [];
+
+  for (let suit of suits) {
+    for (let rank of ranks) {
+      let card = {
+        suit,
+        rank,
+        svg: `${rank}${suit}.svg`,
+        faceUp: false,
+        inTrick: false,
+        playable: true,
+      };
+      deck.push(card);
     }
-    return deck;
+  }
+  return deck;
 }
 // factory to create a Player object with instance getters for that player's hand, tricks, score and
 // name, and setters for add the player to a trick, ++ score and set the players hand by passing
 // a handInstance.
 function createPlayer(name, id) {
-    let _name = name;
-    let _hand = [];
-    let _tricks = [];
-    let _score = 0;
+  let _name = name;
+  let _hand = [];
+  let _tricks = [];
+  let _score = 0;
 
-    const player = Object.create(null);
+  const player = Object.create(null);
 
-    player.getHand = () => _hand;
-    player.getTricks = () => _tricks;
-    player.getScore = () => _score;
-    player.getName = () => _name;
-    player.addTrick = (trick) => _tricks.push(trick);
-    player.incrementScore = (points) => { _score += points; };
-    
-    player.setHand = (handInstance) => {
-        _hand = handInstance;
-    };
-  
-    return player;
+  player.getHand = () => _hand;
+  player.getTricks = () => _tricks;
+  player.getScore = () => _score;
+  player.getName = () => _name;
+  player.addTrick = (trick) => _tricks.push(trick);
+  player.incrementScore = (points) => {
+    _score += points;
+  };
+
+  player.setHand = (handInstance) => {
+    _hand = handInstance;
+  };
+
+  return player;
 }
-// util to help sort cards from C-D-S-H and 2-A 
+// util to help sort cards from C-D-S-H and 2-A
 function cardComparer(a, b) {
   const suitOrder = {
     C: 0,
@@ -77,54 +81,56 @@ function cardComparer(a, b) {
 // factory to create a hand object with a getter to get the cards in the hand, methods
 // to add/remove a card from the hand, and sort the hand
 function createHand(cards) {
-    let _cards = cards;
+  let _cards = cards;
 
-    const hand = Object.create(null);
+  const hand = Object.create(null);
 
-    hand.getCards = () => _cards.slice();
-    hand.removeCard = (card) => {
-      const idx = _cards.findIndex(
-        (c) => c.rank === card.rank && c.suit === card.suit
-      );
-      if (idx === -1) return null;
-      return _cards.splice(idx, 1)[0];
-    };
+  hand.getCards = () => _cards.slice();
+  hand.removeCard = (card) => {
+    const idx = _cards.findIndex(
+      (c) => c.rank === card.rank && c.suit === card.suit
+    );
+    if (idx === -1) return null;
+    return _cards.splice(idx, 1)[0];
+  };
 
-    hand.addCard = (card) => {
-      _cards.push(card);
-    };
+  hand.addCard = (card) => {
+    _cards.push(card);
+  };
 
-    hand.sort = () => _cards.sort(cardComparer);
+  hand.sort = () => _cards.sort(cardComparer);
 
-    return hand;
+  return hand;
 }
 // factory to create a trick object with add/remove cards from trick, getters for cards in the
-// trick, who led the trick, winner of the trick and trick number, and setter to set the 
+// trick, who led the trick, winner of the trick and trick number, and setter to set the
 // winner of the trick
 function createTrick(leadPlayer, trickNumber) {
-    let _plays = [];
-    let _leadPlayer = leadPlayer;
-    let _winner = null;
-    let _trickNumber = trickNumber;
+  let _plays = [];
+  let _leadPlayer = leadPlayer;
+  let _winner = null;
+  let _trickNumber = trickNumber;
 
-    const trick = Object.create(null);
+  const trick = Object.create(null);
 
-    trick.addPlay = (player, card) => {
-      _plays.push({ player, card });
-    };
-    trick.undoLastPlay = () => {
-      if (_plays.length === 0) return null;
-      return _plays.pop();
-    };
-    trick.getPlays = () => _plays.slice();
-    trick.getLeadPlayer = () => _leadPlayer;
-    trick.setWinner = (player) => { _winner = player };
-    trick.getWinner = () => _winner;
-    trick.getTrickNumber = () => _trickNumber;
+  trick.addPlay = (player, card) => {
+    _plays.push({ player, card });
+  };
+  trick.undoLastPlay = () => {
+    if (_plays.length === 0) return null;
+    return _plays.pop();
+  };
+  trick.getPlays = () => _plays.slice();
+  trick.getLeadPlayer = () => _leadPlayer;
+  trick.setWinner = (player) => {
+    _winner = player;
+  };
+  trick.getWinner = () => _winner;
+  trick.getTrickNumber = () => _trickNumber;
 
-    return trick;
+  return trick;
 }
- /* createGame(players) factory to create the **Game Facade** — the single, UI-safe interface
+/* createGame(players) factory to create the **Game Facade** — the single, UI-safe interface
  * between the UI layer and the internal game engine.
  *
  * Responsibilities:
@@ -165,21 +171,28 @@ function createGame(players) {
   let _engine = createGameEngine(players);
 
   const game = Object.create(null);
+  // Change game phase
+  game.finishDeal = () => _engine.dealHands();
+  game.confirmPass = () => _engine.passSelectedCards();
+  game.enterPlayPhase = () => _engine.enterPlayPhase();
+  game.advanceAfterTrick = () => {
+    if (!_engine.isTrickComplete()) return; // safety check
 
-  // Start a deal and return the player order (rotated) for UI
-  game.deal = () => _engine.dealHands();
+    _engine.completeTrick(); // finalize the trick
 
-  // Start play phase
-  game.startPlayPhase = () => _engine.startPlayPhase();
+    // if the hand is complete, optionally trigger end-of-hand scoring
+    if (_engine.isHandComplete()) {
+      _engine.finishHand(); // if you have such a method
+      // otherwise, UI will handle resetting for next hand
+    }
 
+    // after trick completion, _currentPlayerIndex is updated in engine
+  };
   // Play a card (UI calls this on click)
   game.playCard = (player, card) => _engine.playCard(player, card);
 
   // Undo last play
   game.undoLastPlay = () => _engine.undoLastPlay();
-
-  // Pass selected cards
-  game.passSelectedCards = () => _engine.passSelectedCards();
 
   // Add/remove card for pass selection
   game.addCardForPass = (card) => _engine.addCardForPass(card);
@@ -195,7 +208,6 @@ function createGame(players) {
   game.areHeartsBroken = () => _engine.areHeartsBroken();
   game.isTrickComplete = () => _engine.isTrickComplete();
   game.isHandComplete = () => _engine.isHandComplete();
-  game.completeTrick = () => _engine.completeTrick();
   game.getScores = () => _engine.getScores();
   game.getTricksTaken = () => _engine.getTricksTaken();
   game.canUndo = () => _engine.canUndo();

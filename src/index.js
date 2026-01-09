@@ -1,6 +1,5 @@
 import "./styles/main.css";
-import { createPlayer } from "./factories.js";
-import { createGameEngine } from "./gameEngine.js";
+import { createPlayer, createGame } from "./factories.js";
 import {
   renderWaitingMessage,
   removeWaitingMessage,
@@ -41,34 +40,34 @@ import cardTable from "./images/card-table.jpg";
 function handlePassConfirmed() {
   removePassBtn(); 
 
-  const selected = gameEngine.getSelectedCardsForPass();
+  const selected = game.getSelectedCardsForPass();
   if (selected.length !== 3) {
     renderPassError("You need to pass 3 cards");
     return;
   }
 
   clearPassError();
+  console.log("Selected cards for pass:", game.getSelectedCardsForPass());
 
-  gameEngine.passSelectedCards();
+  game.confirmPass();
 
-  gameEngine.setCurrentPhase("play");
   enterPlayPhase();
 }
 //call back to renderDealBtn() has game flow logic in in
 function handleDealConfirmed() {
-  gameEngine.dealHands();
-  const players = gameEngine.getPlayers();
+  game.finishDeal(); 
+  const players = game.getPlayers();
   renderHand(players[0], handleCardClick);
   renderPassUI(); // enable passing
   enablePassSlotUndo(handlePassUndo);
 }
 //handles passing cards from hand to pass slots
 function handleCardClick(player, card) {
-  gameEngine.addCardForPass(card);
+  game.addCardForPass(card);
   renderCardInPassSlot(card);
 
   // 3️⃣ Render Pass button if needed
-  if (gameEngine.getSelectedCardsForPass().length === 3) {
+  if (game.getSelectedCardsForPass().length === 3) {
     renderPassBtn(handlePassConfirmed);
   } else {
     removePassBtn();
@@ -80,7 +79,7 @@ function handleCardClick(player, card) {
 //handles un-passing cards - moving them from pass slots back to hand
 function handlePassUndo(card) {
   // 1️⃣ Update game state
-  gameEngine.removeCardForPass(card);
+  game.removeCardForPass(card);
 
   // 2️⃣ Add card back to player's hand
   const player = players[0];
@@ -91,7 +90,7 @@ function handlePassUndo(card) {
   renderHand(players[0], handleCardClick);
 
   // 4️⃣ Update pass button if needed
-  const selected = gameEngine.getSelectedCardsForPass();
+  const selected = game.getSelectedCardsForPass();
   if (selected.length === 3) {
     renderPassBtn(handlePassConfirmed);
   } else {
@@ -101,11 +100,11 @@ function handlePassUndo(card) {
 
 function enterPlayPhase() {
   clearPassUI();
-  gameEngine.startPlayPhase();
+  game.enterPlayPhase();
   renderHand(players[0], handlePlayCard);
   renderOpponentHands(handleOpponentPlay);
   
-  highlightCurrentPlayer(gameEngine.getCurrentPlayerIndex());
+  highlightCurrentPlayer(game.getCurrentPlayerIndex());
 }
 // call back to renderOpponentHands()
 function handleOpponentPlay(playerIndex) {
@@ -114,7 +113,7 @@ function handleOpponentPlay(playerIndex) {
 
   let cardToPlay = null;
   for (const c of opponent.getHand().getCards()) {
-    if (gameEngine.playCard(opponent, c)) {
+    if (game.playCard(opponent, c)) {
       cardToPlay = c;
       break;
     }
@@ -122,7 +121,7 @@ function handleOpponentPlay(playerIndex) {
   if (!cardToPlay) return;
 
   // UI: render the played card
-  const plays = gameEngine.getCurrentTrick().getPlays();
+  const plays = game.getCurrentTrick().getPlays();
   plays.forEach(({ player, card }, i) => {
     const isUndoable = i === plays.length - 1; // last card only
     renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
@@ -132,50 +131,48 @@ function handleOpponentPlay(playerIndex) {
   renderOpponentHands(handleOpponentPlay);
 
   // Update highlighting and check trick/hand completion
-  highlightCurrentPlayer(gameEngine.getCurrentPlayerIndex());
-  if (gameEngine.isTrickComplete()) gameEngine.completeTrick();
-  if (gameEngine.isHandComplete()) {
+  highlightCurrentPlayer(game.getCurrentPlayerIndex());
+  if (game.isTrickComplete()) game.advanceAfterTrick();
+  if (game.isHandComplete()) {
     // handle end-of-hand scoring, reset, etc.
   }
 }
 //call back to renderHand()
 function handlePlayCard(player, card) {
-  if (!gameEngine.playCard(player, card)) {
+  if (!game.playCard(player, card)) {
     return;
   }
 
   // Remove card from hand UI
   renderHand(players[0], handlePlayCard);
   // Render the played card in the play area
-  const plays = gameEngine.getCurrentTrick().getPlays();
+  const plays = game.getCurrentTrick().getPlays();
   plays.forEach(({ player, card }, i) => {
     const isUndoable = i === plays.length - 1; // last card only
     renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
   });
 
-  if (gameEngine.isTrickComplete()) {
-    gameEngine.completeTrick();
+  if (game.isTrickComplete()) {
+    game.andvanceAfterTrick();
   }
 
-  if (gameEngine.isHandComplete()) {
+  if (game.isHandComplete()) {
     // handle end-of-hand scoring, reset, etc.
   }
 
-  highlightCurrentPlayer(gameEngine.getCurrentPlayerIndex());
+  highlightCurrentPlayer(game.getCurrentPlayerIndex());
 }
 // call back to renderPlayedCard() and moveCardToPlayArea()
 function handleUndoLastPlayed(player) {
-  const undone = gameEngine.undoLastPlay();
+  const undone = game.undoLastPlay();
   if (!undone) return;
-
-  gameEngine.setCurrentPlayer(player);
 
   ["played1", "played2", "played3", "played4"].forEach((id) => {
     const slot = document.getElementById(id);
     if (slot) slot.innerHTML = "";
   });
 
-  const plays = gameEngine.getCurrentTrick().getPlays();
+  const plays = game.getCurrentTrick().getPlays();
   plays.forEach(({ player, card }, i) => {
     const isUndoable = i === plays.length - 1; // only last card
     renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
@@ -184,8 +181,8 @@ function handleUndoLastPlayed(player) {
   renderHand(players[0], handlePlayCard);
   renderOpponentHands(handleOpponentPlay);
   
-  const currentPlayerIndex = players.indexOf(player);
-  console.log("Highlighting player index:", currentPlayerIndex);
+  const currentPlayer = game.getCurrentPlayer();
+  const currentPlayerIndex = players.indexOf(currentPlayer);
   highlightCurrentPlayer(currentPlayerIndex);
 }
 // GAME FLOW //
@@ -195,7 +192,7 @@ const loggedPlayerNames = JSON.parse(localStorage.getItem("players")) || [];
 const players = loggedPlayerNames.map((name, index) =>
   createPlayer(name, index)
 );
-const gameEngine = createGameEngine(players);
+const game = createGame(players);
 
 let undoableCardImg = null;
 
