@@ -1,3 +1,5 @@
+import { controller } from "./index.js";
+
 export function renderWaitingMessage() {
   const container = document.querySelector(".middle-center"); // or a dedicated message div
   if (!container) return;
@@ -17,7 +19,7 @@ export function removeWaitingMessage() {
   if (existingMsg) existingMsg.remove();
 }
 
-export function renderPlayerNames(players) {
+export function renderPlayerNames(players, tricksTaken) {
   if (players.length < 4) return;
 
   const mapping = {
@@ -29,7 +31,9 @@ export function renderPlayerNames(players) {
 
   players.forEach((player, index) => {
     const el = document.getElementById(mapping[index]);
-    if (el) el.textContent = `${player.getName()} - Tricks: 0`; // tricks placeholder
+    if (!el) return;
+
+    el.textContent = `${player.getName()} - Tricks: ${tricksTaken[index]}`;
   });
 }
 
@@ -41,8 +45,8 @@ export function renderPlayerNamesInScoreTable(players) {
     if (th) th.textContent = player.getName();
   });
 }
-
-export function renderDealBtn(onDealConfirmed) {
+// allows click on dealBtn to send deal hand (enter pass phase) intent to dispatch
+export function renderDealBtn() {
   const container = document.querySelector(".middle-center");
   if (!container) return;
 
@@ -54,9 +58,27 @@ export function renderDealBtn(onDealConfirmed) {
   dealBtn.innerText = "Deal";
 
   dealBtn.addEventListener("click", () => {
-    onDealConfirmed(); // ← the escape hatch
+    controller.dispatch("confirmDeal", {});
     dealBtn.remove();
   });
 
   container.appendChild(dealBtn);
+}
+// allows click on HeartsBrokenBtn to send render heartsBroken intent to handler
+export function wireHeartsBrokenBtn() {
+  const btn = document.querySelector(".broken-heart");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    controller.dispatch("showHeartsBrokenMsg", { action: "show" });
+  });
+}
+// allows click on LastTrickBtn to send render lastTrick intent to handler
+export function wireLastTrickBtn() {
+  const btn = document.querySelector(".last-trick");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    controller.dispatch("showLastTrick", { action: "show" });
+  });
 }

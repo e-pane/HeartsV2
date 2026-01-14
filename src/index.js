@@ -6,25 +6,36 @@ import {
   renderPlayerNames,
   renderPlayerNamesInScoreTable,
   renderDealBtn,
+  wireHeartsBrokenBtn,
+  wireLastTrickBtn,
 } from "./pre-passUI.js";
 
 import {
   renderPassUI,
   clearPassUI,
-  renderPassError,
-  clearPassError,
-  enablePassSlotUndo,
   renderPassBtn,
   removePassBtn,
+  renderPassError,
+  clearPassError,
   renderCardInPassSlot,
+  renderPassSlotUndo,
+  renderPassHand,
 } from "./passUI.js";
 
 import {
   highlightCurrentPlayer,
-  renderHand,
+  removeAllGlow,
+  renderPlayHand,
   renderOpponentHands,
-  moveCardToPlayArea,
   renderPlayedCard,
+  removePlayedCard,
+  disableUndoOnPlayedCards,
+  renderClearTrickBtn,
+  removeClearTrickBtn,
+  clearPlayedCardSlots,
+  renderHeartsBrokenMsg,
+  renderLastTrick,
+  clearPlayPassUI,
 } from "./gameUI.js";
 
 import tree1 from "./images/Tree1.png";
@@ -36,8 +47,113 @@ import lastTrick from "./images/last-trick.png";
 import stanfordLogo from "./images/stanford-logo.png";
 import cardTable from "./images/card-table.jpg";
 
-//call back to renderPassBtn() has game flow logic
-function handlePassConfirmed() {
+// map of actionType passed from UI intent to controller.dispatch, to the right handler
+const actionTypeToHandler = {
+  confirmDeal: handleDeal,
+  passCard: handlePassCard,
+  undoPass: handleUndoPass,
+  confirmPass: handleConfirmPass,
+  playCard: handlePlayCard,
+  undoPlay: handleUndoPlay,
+  clearTrick: handleClearTrick,
+  showHeartsBrokenMsg: handleHeartsBroken,
+  clearHeartsBrokenMsg: handleHeartsBroken,
+  showLastTrick: handleLastTrick,
+  clearLastTrick: handleLastTrick,
+  // startNewGame: handleNewGame,
+};
+
+//factory to create a controller object with the dispatch instance method
+function createController(actionMap) {
+  const controller = Object.create(null);
+  controller.dispatch = (actionType, payload) => {
+    const handler = actionMap[actionType];
+    if (!handler) {
+      console.error("Unknown action type:", actionType, payload);
+      return;
+    }
+    try {
+      handler(payload);
+    } catch (err) {
+      console.error("Handler error for actionType:", actionType, err);
+    }
+  };
+  return controller;
+}
+
+export const controller = createController(actionTypeToHandler);
+
+// CALLBACK HANDLERS ("Flattened Dispatch Architecture")
+//
+// All UI click events are routed through a single controller.dispatch() method.
+// UI renderers attach click listeners that call:
+//
+//   controller.dispatch(actionType, payload, optional flag)
+//
+// The dispatcher maps actionType → handler and invokes the corresponding handler
+// with the payload. Handlers:
+//
+//   1. Use payload to mutate authoritative game state via the game facade
+//   2. Query updated state from the facade as needed
+//   3. Invoke UI renderers to pass stateful variables to renders to update the UI
+//
+// Each handler below will be prefaced by comments of 
+// UI intent: UI renderer of origin: actionType : payload : flag : state queried: state mutations: 
+// renderer called: stateful variables passed to renderer
+
+
+// deal hand - enter pass phase: renderDealBtn: confirmDeal: none: none: players (array of 
+// 4 player objects) - currentPlayer object: none: renderPassHand(): currentPlayer
+function handleDeal() {
+  game.finishDeal();
+  const players = game.getPlayers(); // facade call
+  const currentPlayer = players[0];
+  renderPassHand(currentPlayer);
+  renderPassUI(); // enable passing
+}
+// pass card: renderPassHand: passCard: card obj. : none: players (array of 4 player objects)
+// : add to _selectedCardsForPass - remove card from hand instance: renderCardInPassSlot: 
+// card obj
+function handlePassCard({ card }) {
+  game.addCardForPass(card);
+  renderCardInPassSlot(card);
+  const players = game.getPlayers(); // get current player objects
+  const currentPlayer = players[0];
+  renderPassHand(currentPlayer);
+  renderPassSlotUndo();
+
+  const selected = game.getSelectedCardsForPass();
+  if (selected.length === 3) {
+    renderPassBtn();
+  } else {
+    removePassBtn();
+  }
+}
+
+// undo pass card: renderCardInPassSlot: undoPass: card object: none : players array - passed 
+// cards array: remove card from passed cards array - add it back to hand array: renderPassHand
+// - renderPassSlotUndo: card object
+//
+function handleUndoPass({ card }) {
+  game.removeCardForPass(card);
+  const players = game.getPlayers(); // get current player objects
+  const currentPlayer = players[0]; 
+  renderPassHand(currentPlayer);
+  renderPassSlotUndo(card);
+
+  // 4️⃣ Update pass button if needed
+  const selected = game.getSelectedCardsForPass();
+  if (selected.length === 3) {
+    renderPassBtn();
+  } else {
+    removePassBtn();
+  }
+}
+// confirm pass (enter play phase): renderPassBtn: confirmPass: none: none: get passed cards 
+// to confirm legal pass get players object - get current player index: accomplish passing 
+// and reset all players' hands according to pass - change phase to play - set current player
+// to whoever has 2C - create first trick: currentPlayer - players - current player index
+function handleConfirmPass() {
   removePassBtn(); 
 
   const selected = game.getSelectedCardsForPass();
@@ -47,144 +163,164 @@ function handlePassConfirmed() {
   }
 
   clearPassError();
-  console.log("Selected cards for pass:", game.getSelectedCardsForPass());
 
   game.confirmPass();
-
-  enterPlayPhase();
-}
-//call back to renderDealBtn() has game flow logic in in
-function handleDealConfirmed() {
-  game.finishDeal(); 
-  const players = game.getPlayers();
-  renderHand(players[0], handleCardClick);
-  renderPassUI(); // enable passing
-  enablePassSlotUndo(handlePassUndo);
-}
-//handles passing cards from hand to pass slots
-function handleCardClick(player, card) {
-  game.addCardForPass(card);
-  renderCardInPassSlot(card);
-
-  // 3️⃣ Render Pass button if needed
-  if (game.getSelectedCardsForPass().length === 3) {
-    renderPassBtn(handlePassConfirmed);
-  } else {
-    removePassBtn();
-  }
-
-  // 4️⃣ Re-render hand
-  renderHand(players[0], handleCardClick);
-}
-//handles un-passing cards - moving them from pass slots back to hand
-function handlePassUndo(card) {
-  // 1️⃣ Update game state
-  game.removeCardForPass(card);
-
-  // 2️⃣ Add card back to player's hand
-  const player = players[0];
-  player.getHand().addCard(card);
-  player.getHand().sort();
-
-  // 3️⃣ Re-render hand
-  renderHand(players[0], handleCardClick);
-
-  // 4️⃣ Update pass button if needed
-  const selected = game.getSelectedCardsForPass();
-  if (selected.length === 3) {
-    renderPassBtn(handlePassConfirmed);
-  } else {
-    removePassBtn();
-  }
-}
-
-function enterPlayPhase() {
   clearPassUI();
+  const players = game.getPlayers(); // get current player objects
+  const currentPlayer = players[0]; 
+  renderPlayHand(currentPlayer);
+  renderOpponentHands(players);
   game.enterPlayPhase();
-  renderHand(players[0], handlePlayCard);
-  renderOpponentHands(handleOpponentPlay);
-  
   highlightCurrentPlayer(game.getCurrentPlayerIndex());
 }
-// call back to renderOpponentHands()
-function handleOpponentPlay(playerIndex) {
-  const opponent = players[playerIndex];
-  if (!opponent?.getHand()) return;
 
-  let cardToPlay = null;
-  for (const c of opponent.getHand().getCards()) {
-    if (game.playCard(opponent, c)) {
-      cardToPlay = c;
-      break;
+// play card: renderPlayHand - renderOpponentHands: playCard: player and card objects: none:
+// get players array - get hand instance and cards of player playing a card: play the card:
+// renderPlayedCard (and renderPlayHand and renderOpponentHands and highlightCurrentPlayer):
+// player, card, playerIndex, undoable flag set to true
+function handlePlayCard({ player, card }) {
+  const players = game.getPlayers(); // current player objects
+  const currentPlayer = players[0];
+  const playerIndex = players.indexOf(player);
+
+  let cardToPlay = card;
+
+  if (!cardToPlay) {
+    cardToPlay = null;
+    for (const c of player.getHand().getCards()) {
+      console.log("Trying card:", c.rank + c.suit);
+      if (game.playCard(player, c)) {
+        console.log("Success! Played card:", c.rank + c.suit);
+        cardToPlay = c;
+        break; // stop at first successful card
+      } else {
+        console.log("Cannot play card:", c.rank + c.suit);
+      }
+
     }
+    if (!cardToPlay) {
+      console.error("No playable card found for player", player.getName());
+      return;
+    }
+  } else {
+    console.log(
+      ">>> Human clicked card, attempting play:",
+      cardToPlay.rank + cardToPlay.suit
+    );
+    if (!game.playCard(player, cardToPlay)) {
+      console.error(
+        "playCard failed for player",
+        player.getName(),
+        "card",
+        cardToPlay.rank + cardToPlay.suit
+      );
+      return;
+    }
+    console.log("Play succeeded:", cardToPlay.rank + cardToPlay.suit);
   }
-  if (!cardToPlay) return;
-
-  // UI: render the played card
-  const plays = game.getCurrentTrick().getPlays();
-  plays.forEach(({ player, card }, i) => {
-    const isUndoable = i === plays.length - 1; // last card only
-    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
+  
+  renderPlayHand(currentPlayer);
+  renderOpponentHands(players);
+  disableUndoOnPlayedCards();
+  renderPlayedCard(player, cardToPlay, {
+    playerIndex,
+    undoable: true,
   });
 
-  // Re-render opponent hands symbolically (single card back)
-  renderOpponentHands(handleOpponentPlay);
+  if (game.getCurrentTrick().getPlays().length === 4) {
+    renderClearTrickBtn();
+    removeAllGlow();
+  } else {
+    highlightCurrentPlayer(game.getCurrentPlayerIndex());
+  }
 
-  // Update highlighting and check trick/hand completion
-  highlightCurrentPlayer(game.getCurrentPlayerIndex());
-  if (game.isTrickComplete()) game.advanceAfterTrick();
   if (game.isHandComplete()) {
     // handle end-of-hand scoring, reset, etc.
   }
 }
-//call back to renderHand()
-function handlePlayCard(player, card) {
-  if (!game.playCard(player, card)) {
-    return;
-  }
 
-  // Remove card from hand UI
-  renderHand(players[0], handlePlayCard);
-  // Render the played card in the play area
-  const plays = game.getCurrentTrick().getPlays();
-  plays.forEach(({ player, card }, i) => {
-    const isUndoable = i === plays.length - 1; // last card only
-    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
-  });
-
-  if (game.isTrickComplete()) {
-    game.andvanceAfterTrick();
-  }
-
-  if (game.isHandComplete()) {
-    // handle end-of-hand scoring, reset, etc.
-  }
-
-  highlightCurrentPlayer(game.getCurrentPlayerIndex());
-}
-// call back to renderPlayedCard() and moveCardToPlayArea()
-function handleUndoLastPlayed(player) {
+// undo play: renderPlayedCard: undoPlay: none: none: get players array: - call game.undoLastPlay
+// to add card back to players hand -  renderPlayHand - 
+// renderOpponentHands, highlightCurrentPlayer
+function handleUndoPlay() {
   const undone = game.undoLastPlay();
   if (!undone) return;
 
-  ["played1", "played2", "played3", "played4"].forEach((id) => {
-    const slot = document.getElementById(id);
-    if (slot) slot.innerHTML = "";
-  });
+  removeClearTrickBtn();
+  removePlayedCard(undone.playerIndex);
 
-  const plays = game.getCurrentTrick().getPlays();
-  plays.forEach(({ player, card }, i) => {
-    const isUndoable = i === plays.length - 1; // only last card
-    renderPlayedCard(player, card, players, handleUndoLastPlayed, isUndoable);
-  });
-  
-  renderHand(players[0], handlePlayCard);
-  renderOpponentHands(handleOpponentPlay);
-  
-  const currentPlayer = game.getCurrentPlayer();
-  const currentPlayerIndex = players.indexOf(currentPlayer);
-  highlightCurrentPlayer(currentPlayerIndex);
+  const players = game.getPlayers();
+  const currentPlayer = players[0];
+
+  renderPlayHand(currentPlayer);
+  renderOpponentHands(players);
+  highlightCurrentPlayer(game.getCurrentPlayerIndex());
 }
+
+// clear trick - move to next trick: renderClearTrickBtn: clearTrick: none: none: winnerIndex -
+// players array tricksTaken: sets winnerIndex - tallies trick points - increments winner's 
+// tricksTaken - sets the trick just cleared to lastTrick, increments trick number - sets CPI
+// to winnerIndex - clears lastPlay: 6 renderers called: players, tricksTaken, winnerIndex
+function handleClearTrick() {
+  const winnerIndex = game.completeTrick(); 
+  const players = game.getPlayers();
+  const tricksTaken = game.getTricksTaken(); 
+
+  clearPlayedCardSlots();
+  removeClearTrickBtn();
+
+  const currentPlayer = players[winnerIndex];
+
+  renderPlayerNames(players, tricksTaken);
+  renderPlayHand(players[0]);
+  renderOpponentHands(players);
+  highlightCurrentPlayer(winnerIndex);
+}
+
+// render/remove heartsBroken msg: wireHeartsBrokenBtn/renderHeartsBrokenMsg: showHeartsBrokenMsg/
+// clearHeartsBrokenMsg: show/clear: none: heartsBrokenTrick, that trick's plays: 
+// renderHeartsBrokenMsg: bool flag, trick number, plays
+function handleHeartsBroken(payload) {
+  if (payload?.action === "clear") {
+    clearPlayPassUI();
+    return;
+  }
+
+  if (!game.areHeartsBroken()) {
+    renderHeartsBrokenMsg({ heartsBroken: false });
+    return;
+  }
+
+  const trick = game.getHeartsBrokenTrick();
+  const trickNumber = trick.getTrickNumber();
+  const plays = trick.getPlays().map(({ player, card }) => ({
+    playerName: player.getName(),
+    card,
+  }));
+
+  renderHeartsBrokenMsg({
+    heartsBroken: true,
+    trickNumber,
+    plays,
+  });
+}
+// Each handler below will be prefaced by comments of 
+// UI intent: UI renderer of origin: actionType : payload : flag : state queried: state mutations: 
+// renderer called: stateful variables passed to renderer
+function handleLastTrick(payload) {
+  if (payload?.action === "clear") {
+    clearPlayPassUI();
+    return;
+  }
+  const lastTrick = game.getLastTrick();
+  if (!lastTrick) {
+    console.log(">>> handleLastTrick: no last trick available");
+    return;
+  }
+
+  renderLastTrick(lastTrick);
+}
+
 // GAME FLOW //
 const loggedPlayerNames = JSON.parse(localStorage.getItem("players")) || [];
 
@@ -193,16 +329,20 @@ const players = loggedPlayerNames.map((name, index) =>
   createPlayer(name, index)
 );
 const game = createGame(players);
-
-let undoableCardImg = null;
+const tricksTaken = game.getTricksTaken();
 
 if (loggedPlayerNames.length < 4) {
   renderWaitingMessage();
 } else {
   removeWaitingMessage();
-  renderDealBtn(handleDealConfirmed);
-  renderPlayerNames(players);
+  renderDealBtn(handleDeal);
+  // deal button click listener will have the new callback to the controller.dispatch
+  renderPlayerNames(players, tricksTaken);
   renderPlayerNamesInScoreTable(players);
+
+  // Wire the special buttons for later game interactions
+  wireHeartsBrokenBtn(); 
+  wireLastTrickBtn();
 }
 
 const imgTree1 = document.getElementById("Tree1");

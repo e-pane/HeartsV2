@@ -1,3 +1,5 @@
+import { controller } from "./index.js";
+
 export function renderPassUI() {
   clearPassUI();
 
@@ -36,6 +38,23 @@ export function clearPassUI() {
   const slots = document.getElementById("pass-slots");
   if (slots) slots.remove();
 }
+// allows click to send confirm pass (enter play phase) intent to dispatch
+export function renderPassBtn() {
+  const passUI = document.getElementById("play-pass-ui");
+  if (!passUI) return;
+
+  if (document.querySelector(".pass-btn")) return;
+
+  const passBtn = document.createElement("button");
+  passBtn.classList.add("pass-btn");
+  passBtn.innerText = "Pass";
+
+  passBtn.addEventListener("click", () => {
+    controller.dispatch("confirmPass");
+  });
+
+  passUI.appendChild(passBtn);
+}
 
 export function removePassBtn() {
   const btn = document.querySelector(".pass-btn");
@@ -61,43 +80,7 @@ export function clearPassError() {
   const err = document.getElementById("pass-error");
   if (err) err.remove();
 }
-
-export function enablePassSlotUndo(onUndo) {
-  const slots = document.querySelectorAll(".pass-slot");
-
-  slots.forEach((slot) => {
-    slot.addEventListener("click", () => {
-      const cardImg = slot.querySelector("img");
-      if (!cardImg) return; // nothing to undo
-
-      const card = cardImg._cardRef;
-
-      // Remove from slot visually
-      cardImg.remove();
-
-      // Call the callback with the card object
-      if (typeof onUndo === "function") onUndo(card);
-    });
-  });
-}
-
-export function renderPassBtn(onPassConfirmed) {
-  const passUI = document.getElementById("play-pass-ui");
-  if (!passUI) return;
-
-  if (document.querySelector(".pass-btn")) return;
-
-  const passBtn = document.createElement("button");
-  passBtn.classList.add("pass-btn");
-  passBtn.innerText = "Pass";
-
-  passBtn.addEventListener("click", () => {
-    onPassConfirmed(); // ← THIS runs the block above
-  });
-
-  passUI.appendChild(passBtn);
-}
-
+// allows click on card in pass slot to send undo pass intent to dispatch
 export function renderCardInPassSlot(card) {
   const slots = document.querySelectorAll(".pass-slot");
   const emptySlot = Array.from(slots).find(
@@ -112,5 +95,43 @@ export function renderCardInPassSlot(card) {
   img.dataset.suit = card.suit;
   img._cardRef = card;
 
+  img.addEventListener("click", () => {
+    controller.dispatch("undoPass", { card });
+  });
+
   emptySlot.appendChild(img);
+}
+
+export function renderPassSlotUndo(card) {
+  const slots = document.querySelectorAll(".pass-slot");
+
+  slots.forEach((slot) => {
+    const cardImg = slot.querySelector("img");
+    if (!cardImg) return; // nothing to undo
+    if (cardImg._cardRef === card) {
+      cardImg.remove();
+    }
+  });
+}
+// allow click on any pass hand card to send pass card intent to dispatch
+export function renderPassHand(player) {
+  const handContainer = document.querySelector(".bottom-lower");
+  if (!handContainer) return;
+
+  handContainer.innerHTML = "";
+  player
+    .getHand()
+    .getCards()
+    .forEach((card) => {
+      const cardEl = document.createElement("img");
+      cardEl.src = `/images/svg-cards/${card.svg}`;
+      cardEl.className = "card";
+      cardEl.dataset.rank = card.rank;
+      cardEl.dataset.suit = card.suit;
+
+      cardEl.addEventListener("click", () => {
+        controller.dispatch("passCard", { card });
+      });
+      handContainer.appendChild(cardEl);
+    });
 }

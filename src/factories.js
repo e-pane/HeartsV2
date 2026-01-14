@@ -108,7 +108,7 @@ function createHand(cards) {
 function createTrick(leadPlayer, trickNumber) {
   let _plays = [];
   let _leadPlayer = leadPlayer;
-  let _winner = null;
+  let _winnerIndex = null;
   let _trickNumber = trickNumber;
 
   const trick = Object.create(null);
@@ -122,10 +122,11 @@ function createTrick(leadPlayer, trickNumber) {
   };
   trick.getPlays = () => _plays.slice();
   trick.getLeadPlayer = () => _leadPlayer;
-  trick.setWinner = (player) => {
-    _winner = player;
+  trick.setWinnerIndex = (index) => {
+    _winnerIndex = index;
   };
-  trick.getWinner = () => _winner;
+
+  trick.getWinnerIndex = () => _winnerIndex;
   trick.getTrickNumber = () => _trickNumber;
 
   return trick;
@@ -175,19 +176,7 @@ function createGame(players) {
   game.finishDeal = () => _engine.dealHands();
   game.confirmPass = () => _engine.passSelectedCards();
   game.enterPlayPhase = () => _engine.enterPlayPhase();
-  game.advanceAfterTrick = () => {
-    if (!_engine.isTrickComplete()) return; // safety check
 
-    _engine.completeTrick(); // finalize the trick
-
-    // if the hand is complete, optionally trigger end-of-hand scoring
-    if (_engine.isHandComplete()) {
-      _engine.finishHand(); // if you have such a method
-      // otherwise, UI will handle resetting for next hand
-    }
-
-    // after trick completion, _currentPlayerIndex is updated in engine
-  };
   // Play a card (UI calls this on click)
   game.playCard = (player, card) => _engine.playCard(player, card);
 
@@ -198,6 +187,9 @@ function createGame(players) {
   game.addCardForPass = (card) => _engine.addCardForPass(card);
   game.removeCardForPass = (card) => _engine.removeCardForPass(card);
 
+  game.isFirstTrick = () => _engine.isFirstTrick();
+  game.completeTrick = () => _engine.completeTrick();
+
   // Expose state getters
   game.getCurrentPlayer = () => _engine.getCurrentPlayer();
   game.getCurrentPlayerIndex = () => _engine.getCurrentPlayerIndex();
@@ -205,7 +197,9 @@ function createGame(players) {
   game.getCurrentPhase = () => _engine.getCurrentPhase();
   game.getSelectedCardsForPass = () => _engine.getSelectedCardsForPass();
   game.getCurrentTrick = () => _engine.getCurrentTrick();
+  game.getLastTrick = () => _engine.getLastTrick();
   game.areHeartsBroken = () => _engine.areHeartsBroken();
+  game.getHeartsBrokenTrick = () => _engine.getHeartsBrokenTrick(); 
   game.isTrickComplete = () => _engine.isTrickComplete();
   game.isHandComplete = () => _engine.isHandComplete();
   game.getScores = () => _engine.getScores();

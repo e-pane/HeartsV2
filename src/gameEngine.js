@@ -10,6 +10,9 @@ export function createGameEngine(players) {
   let _lastPlay = null;
   let _cardsPlayed = [];
   let _heartsBroken = false;
+  let _heartsBrokenTrick = null;
+  let _lastTrick = null;
+  let _turnSuspended = false;
 
   const engine = Object.create(null);
 
@@ -46,34 +49,30 @@ export function createGameEngine(players) {
 
   let _selectedCardsForPass = [];
 
+  engine.getSelectedCardsForPass = () => _selectedCardsForPass.slice();
+
   engine.addCardForPass = (card) => {
     if (!_selectedCardsForPass.includes(card)) {
       _selectedCardsForPass.push(card);
-      _players[0].getHand().removeCard(card);
+      const currentPlayer = _players[0];
+      currentPlayer.getHand().removeCard(card);
+      currentPlayer.getHand().sort();
     }
   };
-
-  engine.getSelectedCardsForPass = () => _selectedCardsForPass.slice();
 
   engine.removeCardForPass = (card) => {
     _selectedCardsForPass = _selectedCardsForPass.filter(
       (c) => c.rank !== card.rank || c.suit !== card.suit
     );
+
+    const currentPlayer = _players[0];
+    currentPlayer.getHand().addCard(card);
+    currentPlayer.getHand().sort();
   };
 
   engine.passSelectedCards = () => {
     if (_selectedCardsForPass.length !== 3)
       throw new Error("Must pass exactly 3 cards");
-
-    _players.forEach((p, idx) => {
-      console.log(
-        `Player ${idx + 1} hand before pass:`,
-        p
-          .getHand()
-          .getCards()
-          .map((c) => c.rank + c.suit)
-      );
-    });
 
     const player1Cards = _selectedCardsForPass;
 
@@ -105,16 +104,6 @@ export function createGameEngine(players) {
       const hand = toPlayer.getHand();
       cardsToPass[idx].forEach((card) => hand.addCard(card));
       hand.sort(); // optional: keep hand tidy
-    });
-
-    _players.forEach((p, idx) => {
-      console.log(
-        `Player ${idx + 1} hand after pass:`,
-        p
-          .getHand()
-          .getCards()
-          .map((c) => c.rank + c.suit)
-      );
     });
 
     _selectedCardsForPass.length = 0;
@@ -161,8 +150,7 @@ export function createGameEngine(players) {
 
   engine.getCurrentPlayerIndex = () => _currentPlayerIndex;
 
-  engine.isFirstTrick = () =>
-    _currentTrick.getPlays().length === 0 && _currentPhase === "play";
+  engine.isFirstTrick = () => _currentTrick.getTrickNumber() === 1;
 
   engine.enterPlayPhase = () => {
     _currentPhase = "play";
@@ -174,10 +162,14 @@ export function createGameEngine(players) {
   };
 
   engine.playCard = (player, card) => {
-    if (!engine.canPlayCard(player, card)) return false;
-
+    if (_turnSuspended) {
+      return false;
+    }
+    if (!engine.canPlayCard(player, card)) {
+      return false;
+    }
     _lastPlay = null;
-    // Remove the card safely (mutate in place)
+
     player.getHand().removeCard(card);
     card._inTrick = true;
     card._faceUp = true;
@@ -189,21 +181,42 @@ export function createGameEngine(players) {
       (card.suit === "H" || (card.suit === "S" && card.rank === "Q"))
     ) {
       _heartsBroken = true;
+      _heartsBrokenTrick = _currentTrick;
     }
+    _lastPlay = { player, card, playerIndex: _currentPlayerIndex };
 
     if (_currentTrick.getPlays().length === 4) {
-      _currentPhase = "trick-complete";
-      _lastPlay = null; // trick is locked
-    } else {
-      engine.advanceTurn(); // this clears undo
+      _turnSuspended = true;
+      return true;
     }
 
-    _lastPlay = { player, card, playerIndex: _currentPlayerIndex };
+    engine.advanceTurn(); 
 
     return true;
   };
 
   engine.canPlayCard = (player, card) => {
+    console.log(
+      "CANPLAY ENTRY",
+      "isFirstTrick:",
+      engine.isFirstTrick(),
+      "trickNumber:",
+      _currentTrick.getTrickNumber(),
+      "heartsBroken:",
+      _heartsBroken,
+      "currentTrickPlays:",
+      _currentTrick.getPlays().length,
+      "player:",
+      player.getName(),
+      "card:",
+      card.rank + card.suit
+    );
+    console.assert(
+      _players.includes(player),
+      "Player identity mismatch — possible recreation bug",
+      player,
+      _players
+    );
     if (_players[_currentPlayerIndex] !== player) return false;
 
     const hand = player.getHand();
@@ -229,7 +242,8 @@ export function createGameEngine(players) {
       }
 
       // Non-lead players on first trick
-      const ledSuit = _currentTrick.getPlays()[0].card.suit;
+      const trickPlays = _currentTrick.getPlays();
+      const ledSuit = trickPlays.length > 0 ? trickPlays[0].card.suit : null;
       const hasLedSuit = cardsInHand.some((c) => c.suit === ledSuit);
 
       // Must follow suit if possible
@@ -250,6 +264,19 @@ export function createGameEngine(players) {
 
     // Lead player logic
     if (isLeading) {
+      console.log(
+        "LEAD CHECK",
+        "heartsBroken:",
+        _heartsBroken,
+        "onlyHeartsOrQS:",
+        onlyHeartsOrQS,
+        "trickPlays.length:",
+        _currentTrick.getPlays().length,
+        "card:",
+        card.rank + card.suit,
+        "player:",
+        player.getName()
+      );
       // Corner case overrides breaking rules
       if (onlyHeartsOrQS) return true;
 
@@ -272,6 +299,8 @@ export function createGameEngine(players) {
 
   engine.areHeartsBroken = () => _heartsBroken;
 
+  engine.getHeartsBrokenTrick = () => _heartsBrokenTrick;
+
   engine.canUndo = () => _lastPlay !== null;
 
   engine.getLastPlay = () => _lastPlay;
@@ -290,18 +319,43 @@ export function createGameEngine(players) {
     }
     player.getHand().addCard(card);
     player.getHand().sort();
-    _currentPlayerIndex = playerIndex;
+      if (_turnSuspended) {
+        _turnSuspended = false;
+        _currentPlayerIndex = playerIndex;
+      } else {
+        _currentPlayerIndex = playerIndex;
+      }
 
     _lastPlay = null;
 
-    return { player, card };
+    return { player, card, playerIndex };
   };
-
-  engine.isTrickComplete = () => _currentPhase === "trick-complete";
-
+  // just bumps the CPI up by one with each successful play
   engine.advanceTurn = () => {
     _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.length;
   };
+
+  engine.isTurnSuspended = () => _turnSuspended;
+
+  const rankValue = {
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 9,
+    T: 10,
+    J: 11,
+    Q: 12,
+    K: 13,
+    A: 14,
+  };
+
+  function compareCardRanks(cardA, cardB) {
+    return rankValue[cardA.rank] - rankValue[cardB.rank];
+  }
 
   engine.completeTrick = () => {
     if (_currentTrick.getPlays().length !== 4) {
@@ -314,8 +368,8 @@ export function createGameEngine(players) {
     _currentTrick.getPlays().forEach((entry) => {
       if (
         entry.card.suit === ledSuit &&
-        entry.card.rank > winningEntry.card.rank
-      ) {
+        compareCardRanks(entry.card, winningEntry.card) > 0)
+       {
         winningEntry = entry;
       }
     });
@@ -331,16 +385,20 @@ export function createGameEngine(players) {
     _scores[winnerIndex] += trickPoints;
     _tricksTaken[winnerIndex] += 1;
 
+    _lastTrick = _currentTrick;
+
     _currentTrick = createTrick(
       _players[winnerIndex],
       _currentTrick.getTrickNumber() + 1
     );
     _currentPlayerIndex = winnerIndex;
-    _currentPhase = "play";
+    _turnSuspended = false;
     _lastPlay = null; // undo window resets
 
-    return winningEntry.player;
+    return winnerIndex;
   };
+
+  engine.getLastTrick = () => _lastTrick;
 
   engine.isHandComplete = () => {
     // If _currentTrick hasn't been created yet, hand isn't complete
