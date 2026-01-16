@@ -202,6 +202,7 @@ function createGame(players) {
   game.getHeartsBrokenTrick = () => _engine.getHeartsBrokenTrick(); 
   game.isTrickComplete = () => _engine.isTrickComplete();
   game.isHandComplete = () => _engine.isHandComplete();
+  game.finishHand = () => _engine.finishHand();
   game.getScores = () => _engine.getScores();
   game.getTricksTaken = () => _engine.getTricksTaken();
   game.canUndo = () => _engine.canUndo();

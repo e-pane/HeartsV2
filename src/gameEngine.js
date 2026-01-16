@@ -4,6 +4,7 @@ export function createGameEngine(players) {
   let _deck = [];
   let _dealCounter = 0;
   let _players = players;
+  let _tricks = [];
   let _tricksTaken = [0, 0, 0, 0];
   let _scores = [0, 0, 0, 0];
   let _currentPhase = "waiting";
@@ -185,11 +186,6 @@ export function createGameEngine(players) {
     }
     _lastPlay = { player, card, playerIndex: _currentPlayerIndex };
 
-    if (_currentTrick.getPlays().length === 4) {
-      _turnSuspended = true;
-      return true;
-    }
-
     engine.advanceTurn(); 
 
     return true;
@@ -362,6 +358,7 @@ export function createGameEngine(players) {
       throw new Error("Cannot complete trick: trick is not full");
     }
 
+    _turnSuspended = true;
     const ledSuit = _currentTrick.getPlays()[0].card.suit;
 
     let winningEntry = _currentTrick.getPlays()[0];
@@ -387,6 +384,8 @@ export function createGameEngine(players) {
 
     _lastTrick = _currentTrick;
 
+    _players[winnerIndex].addTrick(_currentTrick);
+
     _currentTrick = createTrick(
       _players[winnerIndex],
       _currentTrick.getTrickNumber() + 1
@@ -409,8 +408,15 @@ export function createGameEngine(players) {
   };
 
   engine.finishHand = () => {
-    // 1️⃣ calculate scores for each player
+    // calculate scores for each player
     _players.forEach(player => {
+      console.log(
+        "Scoring player:",
+        player.getName(),
+        "tricks count:",
+        player.getTricks().length
+      );
+        
         const tricksTaken = player.getTricks();
         let handPoints = 0;
         tricksTaken.forEach(trick => {
@@ -421,18 +427,25 @@ export function createGameEngine(players) {
         });
         player.incrementScore(handPoints);
     });
+    // need to create a _moonShot as false (in lex scope) and flip it here to true
+    // if one player got all 26 points.
 
-    // 2️⃣ clear tricks and reset hands for next hand
+    // clear tricks and reset hands for next hand
     _players.forEach(player => {
         player.setHand([]);
         player.getTricks().length = 0; // reset tricks
     });
 
+    _tricksTaken = [0, 0, 0, 0];
+
     _tricks = [];
+    _lastTrick = null;
+    _heartsBroken = false;
     _currentTrick = null;
     _currentPlayerIndex = 0;
     _currentPhase = "deal"; // ready for next hand
   };
+
 
   engine.getScores = () => _scores.slice();
 

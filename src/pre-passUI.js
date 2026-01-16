@@ -39,10 +39,11 @@ export function renderPlayerNames(players, tricksTaken) {
 
 export function renderPlayerNamesInScoreTable(players) {
   players.forEach((player, index) => {
-    const th = document.querySelector(
-      `.score-table th:nth-child(${index + 1})`
-    );
+    const th = document.querySelector(`.score-table th:nth-child(${index + 1})`);
     if (th) th.textContent = player.getName();
+
+    const td = document.querySelector(`.score-table tr:nth-child(2) td:nth-child(${index + 1})`);
+    if (td) td.textContent = player.getScore();
   });
 }
 // allows click on dealBtn to send deal hand (enter pass phase) intent to dispatch

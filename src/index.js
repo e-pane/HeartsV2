@@ -233,10 +233,6 @@ function handlePlayCard({ player, card }) {
   } else {
     highlightCurrentPlayer(game.getCurrentPlayerIndex());
   }
-
-  if (game.isHandComplete()) {
-    // handle end-of-hand scoring, reset, etc.
-  }
 }
 
 // undo play: renderPlayedCard: undoPlay: none: none: get players array: - call game.undoLastPlay
@@ -275,14 +271,35 @@ function handleClearTrick() {
   renderPlayHand(players[0]);
   renderOpponentHands(players);
   highlightCurrentPlayer(winnerIndex);
+
+  // if the hand is over, call finishHand()
+  const lastTrickNumber = game.getCurrentTrick().getTrickNumber() - 1;
+  if (lastTrickNumber === 13) {
+    game.finishHand();
+    removeAllGlow();
+    renderPlayerNames(players, game.getTricksTaken()); 
+    // query the engine for moonShot bool
+    // if it's true, render up and down arrow
+    renderPlayerNamesInScoreTable(players); 
+    renderDealBtn()
+  }
 }
 
 // render/remove heartsBroken msg: wireHeartsBrokenBtn/renderHeartsBrokenMsg: showHeartsBrokenMsg/
 // clearHeartsBrokenMsg: show/clear: none: heartsBrokenTrick, that trick's plays: 
 // renderHeartsBrokenMsg: bool flag, trick number, plays
 function handleHeartsBroken(payload) {
+  const lastTrick = game.getLastTrick();
+  if (!lastTrick) {
+    console.log("No trick yet for hearts broken check");
+    return;
+  }
   if (payload?.action === "clear") {
     clearPlayPassUI();
+    if (game.getCurrentTrick().getPlays().length === 4) {
+      renderClearTrickBtn();
+      removeAllGlow();
+    } 
     return;
   }
 
@@ -310,6 +327,10 @@ function handleHeartsBroken(payload) {
 function handleLastTrick(payload) {
   if (payload?.action === "clear") {
     clearPlayPassUI();
+    if (game.getCurrentTrick().getPlays().length === 4) {
+      renderClearTrickBtn();
+      removeAllGlow();
+    } 
     return;
   }
   const lastTrick = game.getLastTrick();
