@@ -209,13 +209,11 @@ body, .top-section, .top-content {
 .opponent-card {
     width: 90px;    /* smaller symbolic card */
     height: 135px;
-    object-fit: contain;
-    border-radius: 6px;
     transition: transform 0.3s ease;
 }
 
 .card {
-    object-fit: contain;        /* keep image fit */
+    object-fit: cover;       
     transition: transform 0.3s ease;  /* smooth hover/animation */
     border-radius: 10px;        /* optional if you want consistent rounding */
 }
@@ -228,8 +226,14 @@ body, .top-section, .top-content {
     transition: transform 0.3s ease;
 }
 
-.opponent-card.vertical { transform: rotate(0deg); }
-.opponent-card.horizontal { transform: rotate(90deg); transform-origin: center center; }
+.opponent-card.vertical { 
+    transform: rotate(0deg); 
+}
+
+.opponent-card.horizontal { 
+    transform: rotate(90deg); 
+    transform-origin: center center; 
+}
 
 .played-card.vertical {
     transform: rotate(0deg);
@@ -270,15 +274,15 @@ body, .top-section, .top-content {
 
 /* Player 2: middle-left - card to the right of tree */
 #hand2 {
-    margin-left: 16px;  /* small gap */
+    margin-left: 16px; 
 }
 
 /* Player 3: top - card to the left of tree */
 #hand3 {
-    margin-right: 16px; /* small gap */
+    margin-right: 16px; 
 }
 
 /* Player 4: middle-right - card to the right of tree */
 #hand4 {
-    margin-right: 50px;  /* small gap */
+    margin-right: 50px; 
 }

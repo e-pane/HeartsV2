@@ -26,7 +26,7 @@ function createDeck() {
 // a handInstance.
 function createPlayer(name, id) {
   let _name = name;
-  let _hand = [];
+  let _hand = null;
   let _tricks = [];
   let _score = 0;
 
@@ -34,6 +34,9 @@ function createPlayer(name, id) {
 
   player.getHand = () => _hand;
   player.getTricks = () => _tricks;
+  player.setTricks = (tricks) => {
+    _tricks = tricks;
+  };
   player.getScore = () => _score;
   player.getName = () => _name;
   player.addTrick = (trick) => _tricks.push(trick);
@@ -131,6 +134,20 @@ function createTrick(leadPlayer, trickNumber) {
 
   return trick;
 }
+
+// accessory function for the game factory below.  bundles customizable user input on game rules
+function buildRulesFromInput(input) {
+  return {
+    endScore: input.endScore || 100,
+    allowUndo: !!input.allowUndo,
+    showLastTrick: !!input.showLastTrick,
+    showHeartsBroken: !!input.showHeartsBroken,
+    moonRule: input.moonRule,
+    rolloverAt100: !!input.rolloverAt100,
+    allowBreakHeartsFirstTrick: !!input.allowBreakHeartsFirstTrick,
+    queenSpadesCountsAsHeart: !!input.queenSpadesCountsAsHeart,
+  };
+}
 /* createGame(players) factory to create the **Game Facade** — the single, UI-safe interface
  * between the UI layer and the internal game engine.
  *
@@ -172,20 +189,24 @@ function createGame(players) {
   let _engine = createGameEngine(players);
 
   const game = Object.create(null);
+
+  // get initial game state
+  game.getState = () => _engine.getState();
   // Change game phase
-  game.finishDeal = () => _engine.dealHands();
-  game.confirmPass = () => _engine.passSelectedCards();
-  game.enterPlayPhase = () => _engine.enterPlayPhase();
+  game.dealHands = () => _engine.dealHands();
+  game.passSelectedCards = () => _engine.passSelectedCards();
+  game.startHand= () => _engine.startHand();
 
   // Play a card (UI calls this on click)
-  game.playCard = (player, card) => _engine.playCard(player, card);
+  game.playCard = (playerIndex, card) => _engine.playCard(playerIndex, card);
+  game.getFirstPlayableCard = (playerIndex) => _engine.getFirstPlayableCard(playerIndex);
 
   // Undo last play
   game.undoLastPlay = () => _engine.undoLastPlay();
 
   // Add/remove card for pass selection
-  game.addCardForPass = (card) => _engine.addCardForPass(card);
-  game.removeCardForPass = (card) => _engine.removeCardForPass(card);
+  game.addCardForPass = (playerIndex, card) => _engine.addCardForPass(playerIndex, card);
+  game.removeCardForPass = (playerIndex, card) => _engine.removeCardForPass(playerIndex, card); 
 
   game.isFirstTrick = () => _engine.isFirstTrick();
   game.completeTrick = () => _engine.completeTrick();
@@ -195,6 +216,7 @@ function createGame(players) {
   game.getCurrentPlayerIndex = () => _engine.getCurrentPlayerIndex();
   game.getPlayers = () => _engine.getPlayers();
   game.getCurrentPhase = () => _engine.getCurrentPhase();
+  game.getPassDirection = () => _engine.getPassDirection();
   game.getSelectedCardsForPass = () => _engine.getSelectedCardsForPass();
   game.getCurrentTrick = () => _engine.getCurrentTrick();
   game.getLastTrick = () => _engine.getLastTrick();
@@ -206,6 +228,10 @@ function createGame(players) {
   game.getScores = () => _engine.getScores();
   game.getTricksTaken = () => _engine.getTricksTaken();
   game.canUndo = () => _engine.canUndo();
+
+  game.moonShot = () => _engine.moonShot();
+  game.everyoneUp26 = () => _engine.everyoneUp26();
+  game.shooterDown26 = () => _engine.shooterDown26();
 
   return game;
 }

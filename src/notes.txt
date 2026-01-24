@@ -1,7 +1,29 @@
-end of trick logic should nullify last play (which will nullify undo) reset last trick, 
-set a trick winner, reset trick numbrer, set suspended to true for a moment, 
-clear the currentTrick array of plays, render updated tricks taken, clear the play-pass-ui, 
-remove glow set lead player to the trick winner, while finishHand should be called from 
-completeTrick() when trickNumber === 13, and should update player scores, render updated 
-player scores based on the hand that just finished, clear last trick, set heartsBroken to 
-false set player who deals and render them a deal button.  
+dealHands
+
+PASS
+
+addCardForPass
+
+removeCardForPass
+
+passSelectedCards (implicit but required to exit PASS)
+
+PLAY
+
+playCard
+
+undoLastPlay
+
+completeTrick (internal but phase-relevant)
+
+HAND_RESOLUTION
+
+finishHand
+
+everyoneUp26
+
+shooterDown26
+
+GAME_OVER
+
+newGame only

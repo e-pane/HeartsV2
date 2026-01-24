@@ -1,13 +1,4 @@
 /* Deal button styling */
-#dealBtn {
-    font-size: 2.5rem;  /* bigger button text */
-    padding: 1rem 2rem; /* bigger button itself */
-    cursor: pointer;
-    border: none;
-    border-radius: 0.5rem;
-    background-color: #C41E3A;
-    color: white;
-}
 
 .deal-btn {
     background: linear-gradient(to bottom, #1E3A5F, #375A7A); /* deep cobalt blue */

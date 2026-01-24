@@ -1,6 +1,6 @@
 import { controller } from "./index.js";
 
-export function renderPassUI() {
+export function renderPassUI(passDirection) {
   clearPassUI();
 
   const messageContainer = document.getElementById("pass-message-container");
@@ -8,11 +8,22 @@ export function renderPassUI() {
 
   const message = document.createElement("p");
   message.id = "pass-message";
-  message.textContent = "Pick 3 cards to pass to the left";
+  
+  if (passDirection === "left")
+    message.textContent = "Pick 3 cards to pass to the left";
+  else if (passDirection === "right")
+    message.textContent = "Pick 3 cards to pass to the right";
+  else if (passDirection === "across")
+    message.textContent = "Pick 3 cards to pass across";
+  else if (passDirection === "keep") message.textContent = "This is indeed a keeper.  You might be boned";
+
   messageContainer.appendChild(message);
+
+  if (passDirection === "keep") return;
 
   const passUI = document.getElementById("play-pass-ui");
   if (!passUI) return;
+
   const passSlotsContainer = document.createElement("div");
   passSlotsContainer.id = "pass-slots";
   passSlotsContainer.className = "pass-slots-container";
@@ -81,12 +92,15 @@ export function clearPassError() {
   if (err) err.remove();
 }
 // allows click on card in pass slot to send undo pass intent to dispatch
-export function renderCardInPassSlot(card) {
+export function renderCardInPassSlot(playerIndex, card) {
   const slots = document.querySelectorAll(".pass-slot");
+
   const emptySlot = Array.from(slots).find(
     (slot) => !slot.querySelector("img")
   );
-  if (!emptySlot) return;
+  if (!emptySlot) {
+    return;
+  }
 
   const img = document.createElement("img");
   img.src = `/images/svg-cards/${card.svg}`;
@@ -96,7 +110,7 @@ export function renderCardInPassSlot(card) {
   img._cardRef = card;
 
   img.addEventListener("click", () => {
-    controller.dispatch("undoPass", { card });
+    controller.dispatch("undoPass", { playerIndex, card });
   });
 
   emptySlot.appendChild(img);
@@ -114,24 +128,21 @@ export function renderPassSlotUndo(card) {
   });
 }
 // allow click on any pass hand card to send pass card intent to dispatch
-export function renderPassHand(player) {
-  const handContainer = document.querySelector(".bottom-lower");
+export function renderPassHand(playerIndex, cards) {
+  const handContainer = document.getElementById("player-hand");
   if (!handContainer) return;
 
   handContainer.innerHTML = "";
-  player
-    .getHand()
-    .getCards()
-    .forEach((card) => {
-      const cardEl = document.createElement("img");
-      cardEl.src = `/images/svg-cards/${card.svg}`;
-      cardEl.className = "card";
-      cardEl.dataset.rank = card.rank;
-      cardEl.dataset.suit = card.suit;
+  cards.forEach((card) => {
+    const cardEl = document.createElement("img");
+    cardEl.src = `/images/svg-cards/${card.svg}`;
+    cardEl.className = "card";
+    cardEl.dataset.rank = card.rank;
+    cardEl.dataset.suit = card.suit;
 
-      cardEl.addEventListener("click", () => {
-        controller.dispatch("passCard", { card });
-      });
-      handContainer.appendChild(cardEl);
+    cardEl.addEventListener("click", () => {
+      controller.dispatch("passCard", { playerIndex, card });
     });
+    handContainer.appendChild(cardEl);
+  });
 }
