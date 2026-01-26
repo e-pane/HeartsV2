@@ -207,10 +207,13 @@ body, .top-section, .top-content {
 }
 
 .opponent-card {
-    width: 90px;    /* smaller symbolic card */
+    width: 90px;
     height: 135px;
-    transition: transform 0.3s ease;
-}
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.4),
+      0 4px 8px rgba(0, 0, 0, 0.25);
+  }
 
 .card {
     object-fit: cover;       

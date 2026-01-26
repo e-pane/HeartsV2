@@ -1,5 +1,7 @@
 import "./styles/main.css";
 import { createPlayer, createGame } from "./factories.js";
+import { extractHandsAndIndexes, checkGameOver } from "./controllerHelpers.js";
+import { clearPlayPassUI } from "./rendererHelpers.js";
 import {
   renderWaitingMessage,
   removeWaitingMessage,
@@ -35,9 +37,9 @@ import {
   clearPlayedCardSlots,
   renderHeartsBrokenMsg,
   renderLastTrick,
-  clearPlayPassUI,
   renderMoonShotButtons,
   renderGameWinner,
+  renderGameTie,
   renderNewGameBtn,
   clearNewGameBtn,
 } from "./gameUI.js";
@@ -49,10 +51,6 @@ import tree4 from "./images/Tree4.png";
 import brokenHeart from "./images/broken-heart.png";
 import lastTrick from "./images/last-trick.png";
 import stanfordLogo from "./images/stanford-logo.png";
-import cardTable from "./images/card-table.jpg";
-import moonImg from "./images/moon.png";
-import upArrowImg from "./images/moon.png";
-import downArrowImg from "./images/moon.png";
 
 // For later game rules customization
 // let gameRules = null;
@@ -78,7 +76,6 @@ const actionTypeToHandler = {
   undoPlay: handleUndoPlay,
   clearTrick: handleTrickOver,
   handOver: handleHandOver,
-  // gameOver: handleGameOver,
   newGame: handleNewGame,
   showHeartsBrokenMsg: handleHeartsBroken,
   clearHeartsBrokenMsg: handleHeartsBroken,
@@ -123,7 +120,6 @@ export const controller = createController(actionTypeToHandler);
 //   3. Invoke UI renderers to pass stateful variables to renders to update the UI
 
 function handleInit() {
-  console.log("handleInit called");
   const result = game.getState();
   if (!result.success) return;
 
@@ -135,12 +131,8 @@ function handleInit() {
 function handleDeal() {
   clearPassError();
   const result = game.dealHands();
-  const firstPlayerIndex = Number(Object.keys(result.handsByPlayerIndex)[0]);
-  const player1Hand = result.handsByPlayerIndex[firstPlayerIndex];
-
-  const opponentIndexes = Object.keys(result.handsByPlayerIndex)
-    .map(Number)
-    .filter((i) => i !== firstPlayerIndex);
+  const { firstPlayerIndex, player1Hand, opponentIndexes } =
+    extractHandsAndIndexes(result.handsByPlayerIndex);
 
   const passDirection = result.passDirection;
 
@@ -162,8 +154,11 @@ function handlePassCard({ playerIndex, card }) {
     return renderPassError(result.error);
   }
 
-  renderCardInPassSlot(playerIndex, card);
+  if (result.currentPhase !== "pass") {
+    return renderPassError("Not in pass phase");
+  }
 
+  renderCardInPassSlot(playerIndex, card);
   renderPassHand(playerIndex, result.playerHand.getCards());
 
   if (result.selectedCardsForPass.length === 3) {
@@ -183,6 +178,10 @@ function handleUndoPass({ playerIndex, card }) {
   renderPassHand(playerIndex, result.playerHand.getCards());
   renderPassSlotUndo(card);
 
+  if (result.currentPhase !== "pass") {
+    return renderPassError("Not in pass phase");
+  }
+
   if (result.selectedCardsForPass.length === 3) {
     renderPassBtn();
   } else {
@@ -200,16 +199,14 @@ function handleConfirmPass() {
   removePassBtn();
   clearPassUI();
 
-  const firstPlayerIndex = Number(Object.keys(result.handsByPlayerIndex)[0],);
-  const player1Hand = result.handsByPlayerIndex[firstPlayerIndex];
-
-  const opponentIndexes = Object.keys(result.handsByPlayerIndex)
-    .map(Number)
-    .filter((i) => i !== firstPlayerIndex);
+  if (result.currentPhase === "play") {
+    const { firstPlayerIndex, player1Hand, opponentIndexes } =
+      extractHandsAndIndexes(result.handsByPlayerIndex);
   
-  renderPlayHand(firstPlayerIndex, player1Hand.getCards());
-  renderOpponentHands(opponentIndexes);
-  highlightCurrentPlayer(result.currentPlayerIndex);
+    renderPlayHand(firstPlayerIndex, player1Hand.getCards());
+    renderOpponentHands(opponentIndexes);
+    highlightCurrentPlayer(result.currentPlayerIndex);
+  }
 }
 
 function handlePlayCard({ playerIndex, card }) {
@@ -221,17 +218,13 @@ function handlePlayCard({ playerIndex, card }) {
   }
 
   const result = game.playCard(playerIndex, card);
-  const stateResult = game.getState();
-
   if (!result.success) return;
+
+  const stateResult = game.getState();
   if (!stateResult.success) return;
   
-  const firstPlayerIndex = Number(Object.keys(stateResult.handsByPlayerIndex)[0]);
-  const player1Hand = stateResult.handsByPlayerIndex[firstPlayerIndex];
-
-  const opponentIndexes = Object.keys(stateResult.handsByPlayerIndex)
-    .map(Number)
-    .filter((i) => i !== firstPlayerIndex);
+  const { firstPlayerIndex, player1Hand, opponentIndexes } =
+    extractHandsAndIndexes(stateResult.handsByPlayerIndex);
 
   renderPlayHand(firstPlayerIndex, player1Hand.getCards());
   renderOpponentHands(opponentIndexes);
@@ -242,6 +235,11 @@ function handlePlayCard({ playerIndex, card }) {
     card,
     undoable: game.canUndo(),
   });
+  
+  if (result.currentPhase !== "play") {
+    // do nothing here (no new UI needed)
+    return;
+  }
   
   if (result.currentTrick.getPlays().length === 4) {
     renderClearTrickBtn();
@@ -258,22 +256,25 @@ function handleUndoPlay() {
   const stateResult = game.getState();
   if (!stateResult.success) return;
 
-  if (stateResult.currentTrick.getPlays().length < 4) {
-    removeClearTrickBtn();
-  }
+  // if (result.currentPhase === "play") {
+    if (stateResult.currentTrick.getPlays().length < 4) {
+      removeClearTrickBtn();
+    }
+  // } else {
+  //   removeClearTrickBtn();
+  // }
 
   removePlayedCard(result.undonePlay.playerIndex);
 
-  const firstPlayerIndex = Number(Object.keys(stateResult.handsByPlayerIndex)[0]);
-  const player1Hand = stateResult.handsByPlayerIndex[firstPlayerIndex];
-
-  const opponentIndexes = Object.keys(stateResult.handsByPlayerIndex)
-    .map(Number)
-    .filter((i) => i !== firstPlayerIndex);
+  const { firstPlayerIndex, player1Hand, opponentIndexes } =
+    extractHandsAndIndexes(stateResult.handsByPlayerIndex);
 
   renderPlayHand(firstPlayerIndex, player1Hand.getCards());
   renderOpponentHands(opponentIndexes);
-  highlightCurrentPlayer(result.currentPlayerIndex);
+
+  if (result.currentPhase === "play") {
+    highlightCurrentPlayer(result.currentPlayerIndex);
+  }
 }
 
 function handleTrickOver() {
@@ -286,19 +287,15 @@ function handleTrickOver() {
   clearPlayedCardSlots();
   removeClearTrickBtn();
 
-  const firstPlayerIndex = Number(
-    Object.keys(stateResult.handsByPlayerIndex)[0],
-  );
-  const player1Hand = stateResult.handsByPlayerIndex[firstPlayerIndex];
+  if (result.currentPhase === "play") {
+    const { firstPlayerIndex, player1Hand, opponentIndexes } =
+      extractHandsAndIndexes(stateResult.handsByPlayerIndex);
 
-  const opponentIndexes = Object.keys(stateResult.handsByPlayerIndex)
-    .map(Number)
-    .filter((i) => i !== firstPlayerIndex);
-
-  renderPlayHand(firstPlayerIndex, player1Hand.getCards());
-  renderOpponentHands(opponentIndexes);
-  removeAllGlow();
-  highlightCurrentPlayer(result.currentPlayerIndex);
+    renderPlayHand(firstPlayerIndex, player1Hand.getCards());
+    renderOpponentHands(opponentIndexes);
+    removeAllGlow();
+    highlightCurrentPlayer(result.currentPlayerIndex);
+  }
 
   renderPlayerNames(stateResult.players, stateResult.tricksTaken);
   
@@ -318,35 +315,62 @@ function handleHandOver() {
   renderPlayerNames(stateResult.players, stateResult.tricksTaken);
   renderPlayerNamesInScoreTable(stateResult.players, "handleHandOver");
 
-  if (result.gameOver) {
+  if (result.moonShot) {
+    renderMoonShotButtons(
+      stateResult.players[result.moonShooterIndex],
+      result.garySpecialMessage,
+    );
+    return;
+  }
+
+  const gameOver = checkGameOver(result, stateResult);
+  if (gameOver.gameOver) {
+    if (gameOver.gameTied) {
+      renderGameTie(stateResult.players, result.tieIndexes);
+      renderNewGameBtn();
+      return;
+    }
+
     renderGameWinner(stateResult.players, result.winnerIndex);
     renderNewGameBtn();
     return;
   }
 
-  if (result.moonShot) {
-    renderMoonShotButtons(
-      stateResult.players[result.moonShooterIndex],
-      result.garySpecialMessage);
-  }
-
-  else {
-    clearPlayPassUI();
-    renderDealBtn();
-  }
+  clearPlayPassUI();
+  renderDealBtn();
 }
 
-// function handleGameOver() {
-//   console.log("handleGameOver called");
-//   const result = game.finishHand();
-//   const stateResult = game.getState();
+function handleMoonShot(payload) {
+  clearPlayPassUI();
+  let result;
 
-//   if (!result.success) return;
-//   if (!stateResult.success) return;
+  if (payload.direction === "up") {
+    result = game.everyoneUp26();
+  } else {
+    result = game.shooterDown26();
+  }
+  if (!result.success) return;
 
-//   renderGameWinner(stateResult.players, result.winnerIndex);
-//   renderNewGameBtn();
-// }
+  const stateResult = game.getState();
+  if (!stateResult.success) return;
+
+  renderPlayerNamesInScoreTable(stateResult.players, "handleMoonShot");
+
+  const gameOver = checkGameOver(result, stateResult);
+  if (gameOver.gameOver) {
+    if (gameOver.gameTied) {
+      renderGameTie(stateResult.players, result.tieIndexes);
+      renderNewGameBtn();
+      return;
+    }
+
+    renderGameWinner(stateResult.players, result.winnerIndex);
+    renderNewGameBtn();
+    return;
+  }
+
+  renderDealBtn();
+}
 
 function handleNewGame() {
   const loggedPlayerNames = JSON.parse(localStorage.getItem("players")) || [];
@@ -366,34 +390,11 @@ function handleNewGame() {
   renderDealBtn();
 }
 
-function handleMoonShot(payload) {
-  clearPlayPassUI();
-  let result;
-
-  if (payload.direction === "up") {
-    result = game.everyoneUp26();
-  } else {
-    result = game.shooterDown26();
-  }
-  if (!result.success) return;
-
-  const stateResult = game.getState();
-  if (!stateResult.success) return;
-  
-  renderPlayerNamesInScoreTable(stateResult.players, "handleMoonShot");
-
-  if (result.gameOver) {
-    renderGameWinner(stateResult.players, result.winnerIndex);
-    renderNewGameBtn();
-    return;
-  }
-
-  renderDealBtn();
-}
-
 function handleHeartsBroken(payload) {
   const stateResult = game.getState();
   if (!stateResult.success) return;
+
+  if (stateResult.currentPhase !== "play") return;
 
   if (payload?.action === "show") {
     if (!stateResult.heartsBroken) {
@@ -415,13 +416,15 @@ function handleHeartsBroken(payload) {
 
   if (payload?.action === "clear") {
     clearPlayPassUI();
-    if (stateResult.currentTrick?.getPlays()?.length === 4) {
+
+    if (
+      stateResult.currentPhase === "play" &&
+      stateResult.currentTrick?.getPlays()?.length === 4
+    ) {
       renderClearTrickBtn();
       removeAllGlow();
     }
-    if (stateResult.currentPhase !== "play" && stateResult.currentPhase !== "pass"){
-     renderDealBtn();
-    }
+
     return;
   }
 }
@@ -430,22 +433,25 @@ function handleLastTrick(payload) {
   const stateResult = game.getState();
   if (!stateResult.success) return;
 
-  if (payload?.action === "show") { 
-    if (!stateResult.lastTrick) {
-      console.log(">>> handleLastTrick: no last trick available");
-      return;
-    }
+  // only if a last trick exists
+  if (!stateResult.lastTrick) return;  
 
+  if (payload?.action === "show") {
+    if (stateResult.currentPhase !== "play") return;
     renderLastTrick(stateResult.lastTrick);
+    return;
   }
 
   if (payload?.action === "clear") {
     clearPlayPassUI();
-    if (stateResult.currentTrick?.getPlays()?.length === 4) {
+
+    if (
+      stateResult.currentPhase === "play" &&
+      stateResult.currentTrick?.getPlays()?.length === 4
+    ) {
       renderClearTrickBtn();
       removeAllGlow();
     }
-    return;
   }
 }
 

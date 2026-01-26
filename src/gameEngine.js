@@ -1,4 +1,5 @@
 import { createDeck, createHand, shuffle, createTrick } from "./factories.js";
+import { calculateGameOver } from "./engineHelpers.js";
 
 export function createGameEngine(players) {
   let _deck = [];
@@ -20,6 +21,8 @@ export function createGameEngine(players) {
   let _moonShooterIndex = null;
   let _garySpecialMessage = false;
   let _gameWinnerIndex = null;
+  let _gameTied = false;
+  let _gameTieIndexes = null;
   let _gameOver = false;
 
   const engine = Object.create(null);
@@ -101,14 +104,14 @@ export function createGameEngine(players) {
       handsByPlayerIndex,
     }
   };
-
-  engine.getCurrentPhase = () => _currentPhase;
   
   engine.getPlayers = () => _players.slice();
 
-  engine.getPassDirection = () => _passDirection;
-
   engine.addCardForPass = (playerIndex, card) => {
+    if (_currentPhase !== "pass") {
+      return { success: false, error: "not in pass phase" };
+    }
+
     const selected = _selectedCardsForPass[playerIndex];
 
     if (selected.length === 3) {
@@ -128,12 +131,20 @@ export function createGameEngine(players) {
 
     return {
       success: true,
+      currentPhase: _currentPhase,
       selectedCardsForPass: [...selected],
       playerHand: currentPlayer.getHand(),
     };
   };
 
-  engine.removeCardForPass = (playerIndex,card) => {
+  engine.removeCardForPass = (playerIndex, card) => {
+    if (_currentPhase !== "pass") {
+      return {
+        success: false,
+        error: "Not in pass phase",
+        currentPhase: _currentPhase,
+      };
+    }
     const updated = _selectedCardsForPass[playerIndex].filter(
       (c) => c.rank !== card.rank || c.suit !== card.suit,
     );
@@ -145,13 +156,15 @@ export function createGameEngine(players) {
 
     return {
       success: true,
+      currentPhase: _currentPhase,
       selectedCardsForPass: [...updated],
       playerHand: currentPlayer.getHand(),
     };
   };
 
   engine.passSelectedCards = () => {
-    // need a multiplayer check here for later on
+    // Single-client mode: only player 0 selects cards.
+    // In multiplayer, replace this guard with an "all players ready" check.
     if (_selectedCardsForPass[0].length !== 3) {
       return { success: false, error: "pass not ready" };
     }
@@ -160,20 +173,20 @@ export function createGameEngine(players) {
       success: true,
       currentPhase: "play",
       passDirection: _passDirection,
-      currentPlayerIndex: _currentPlayerIndex,
-      currentTrick: _currentTrick,
+      currentPlayerIndex: null,
+      currentTrick: null,
       handsByPlayerIndex: {},
     };
 
     if (_passDirection === "keep") {
       _selectedCardsForPass = [[], [], [], []];
 
-      const { handsByPlayerIndex } = engine.getState(); 
+      const { handsByPlayerIndex } = engine.getState();
       result.handsByPlayerIndex = { ...handsByPlayerIndex };
 
       return result; // <--- still one return object
     }
-    
+
     const cardsToPass = [
       _selectedCardsForPass[0], // player 0 selections
       _players[1].getHand().getCards().slice(0, 3), // mocked opponent
@@ -216,6 +229,8 @@ export function createGameEngine(players) {
       hand.sort(); // optional: keep hand tidy
     });
 
+    _currentPhase = "play";
+
     const leadPlayerIndex = getPlayerWith2C();
     _currentPlayerIndex = leadPlayerIndex >= 0 ? leadPlayerIndex : 0;
     _currentTrick = createTrick(_players[_currentPlayerIndex], 1);
@@ -223,7 +238,6 @@ export function createGameEngine(players) {
     result.currentPlayerIndex = _currentPlayerIndex;
     result.currentTrick = _currentTrick;
 
-    _currentTrick = createTrick(_players[_currentPlayerIndex], 1);
     const { handsByPlayerIndex } = engine.getState();
     result.handsByPlayerIndex = { ...handsByPlayerIndex };
 
@@ -265,10 +279,6 @@ export function createGameEngine(players) {
     return _players[_currentPlayerIndex];
   };
 
-  engine.getCurrentPlayer = () => _players[_currentPlayerIndex];
-
-  engine.getCurrentPlayerIndex = () => _currentPlayerIndex;
-
   engine.isFirstTrick = () => _currentTrick.getTrickNumber() === 1;
 
   engine.playCard = (playerIndex, card) => {
@@ -289,6 +299,10 @@ export function createGameEngine(players) {
     card._faceUp = true;
     _currentTrick.addPlay(player, card);;
     _cardsPlayed.push(card);
+
+    if (_currentTrick.getPlays().length === 4) {
+      _turnSuspended = true;
+    }
 
     const preHeartsBroken = _heartsBroken;
     const preHeartsBrokenTrick = _heartsBrokenTrick;
@@ -313,6 +327,7 @@ export function createGameEngine(players) {
 
     return {
       success: true,
+      currentPhase: _currentPhase,
       currentPlayerIndex: _currentPlayerIndex,
       lastPlay: _lastPlay,
       currentTrick: _currentTrick,
@@ -412,10 +427,14 @@ export function createGameEngine(players) {
   };
 
   engine.undoLastPlay = () => {
-    console.log("undoLastPlay called");
     if (!_lastPlay) {
       return { success: false, error: "this card play can't be undone" };
     }
+
+    if (_currentPhase !== "play") {
+      return { success: false, error: "cannot undo outside of play phase" };
+    }
+
     const { player, card, playerIndex } = _lastPlay;
 
     const undone = _currentTrick.undoLastPlay();
@@ -427,6 +446,7 @@ export function createGameEngine(players) {
     if (undone.player !== player || undone.card !== card) {
       return { success: false, error: "Undo state mismatch" };
     }
+
     player.getHand().addCard(card);
     player.getHand().sort();
 
@@ -435,25 +455,18 @@ export function createGameEngine(players) {
 
     _heartsBroken = _lastPlay.preHeartsBroken;
     _heartsBrokenTrick = _lastPlay.preHeartsBrokenTrick;
-    console.log("undoLastPlay restored | heartsBroken:", _heartsBroken);
 
     _lastPlay = null;
 
     return {
       success: true,
+      currentPhase: _currentPhase,
       currentPlayerIndex: _currentPlayerIndex,
       undonePlay: { playerIndex, card },
     };
   };
 
-  engine.areHeartsBroken = () => _heartsBroken;
-
-  engine.getHeartsBrokenTrick = () => _heartsBrokenTrick;
-
   engine.canUndo = () => _lastPlay !== null;
-
-  engine.getLastPlay = () => _lastPlay;
-
 
   // just bumps the CPI up by one with each successful play
   engine.advanceTurn = () => {
@@ -464,8 +477,6 @@ export function createGameEngine(players) {
       currentPlayerIndex: _currentPlayerIndex,
     };
   };
-
-  engine.isTurnSuspended = () => _turnSuspended;
 
   const rankValue = {
     2: 2,
@@ -522,7 +533,10 @@ export function createGameEngine(players) {
     _tricks.push(_currentTrick);
 
     if (_tricks.length === 13) {
-      _handOver = true
+      _handOver = true;
+      _currentPhase = "hand_resolution";
+    } else {
+      _currentPhase = "play"; // <— keep phase consistent
     }
 
     _currentTrick = createTrick(
@@ -536,6 +550,7 @@ export function createGameEngine(players) {
     return {
       success: true,
       winnerIndex,
+      currentPhase: _currentPhase,
       currentPlayerIndex: _currentPlayerIndex,
       currentTrick: _currentTrick,
       lastTrick: _lastTrick,
@@ -543,16 +558,39 @@ export function createGameEngine(players) {
       handOver: _handOver,
     };
   };
+// scoped helper for the 3 scoring methods below
+  function setPhaseAfterScoring() {
+    _currentPhase = _gameOver ? "gameOver" : "deal";
+  }
+// another scoped helper for the 3 scoring methods below
+  function resetHandState() {
+    _players.forEach((player) => {
+      player.setHand([]);
+      player.setTricks([]);
+    });
 
-  engine.getLastTrick = () => _lastTrick;
+    _tricksTaken = [0, 0, 0, 0];
+    _tricks = [];
+    _lastTrick = null;
+    _heartsBroken = false;
+    _currentTrick = null;
+    _currentPlayerIndex = 0;
+  }
+// another scoped helper for the scoring methods below
+  function updateGameOverAndPhase(scores) {
+    const gameOverResult = calculateGameOver(scores);
 
-  engine.isHandComplete = () => {
-    // If _currentTrick hasn't been created yet, hand isn't complete
-    if (!_currentTrick) return false;
+    _gameOver = gameOverResult.gameOver;
+    _gameTied = gameOverResult.gameTied;
+    _gameWinnerIndex = gameOverResult.winnerIndex;
+    _gameTieIndexes = gameOverResult.tieIndexes;
 
-    // Hand is complete after trick #13
-    return _currentTrick.getTrickNumber() > 13;
-  };
+    setPhaseAfterScoring();
+  }
+// another scoped helper for the scoring methods below
+  function getScores() {
+    return _players.map((p) => p.getScore());
+  }
 
   engine.finishHand = () => {
     _moonShot = false;
@@ -600,45 +638,25 @@ export function createGameEngine(players) {
         }
       else {
         player.incrementScore(handPoints);
-        }
+      }
     });
 
-    const scores = engine.getPlayers().map((p) => p.getScore());
-    const someoneOver100 = scores.some((s) => s >= 13);
-    
-    if (someoneOver100) {
-      const lowestScore = Math.min(...scores);
-      _gameWinnerIndex = scores.indexOf(lowestScore);
-      _gameOver = true;
-    }
+    const scores = getScores();
+    updateGameOverAndPhase(scores);
 
-    // clear tricks and reset hands for next hand
-    _players.forEach(player => {
-        player.setHand([]);
-        player.setTricks([]); // reset tricks
-    });
-
-    _tricksTaken = [0, 0, 0, 0];
-
-    _tricks = [];
-    _lastTrick = null;
-    _heartsBroken = false;
-    _currentTrick = null;
-    _currentPlayerIndex = 0;
-
-    if (!_gameOver) {
-      _currentPhase = "deal"; // ready for next hand
-    } 
+    resetHandState();
 
     return {
       success: true,
       moonShot: _moonShot,
       moonShooterIndex: _moonShooterIndex,
       garySpecialMessage: _garySpecialMessage,
-      currentScores: _players.map((p) => p.getScore()),
-      gameOver: _gameOver,
-      winnerIndex: _gameWinnerIndex, 
+      currentPhase: _currentPhase,
+      currentScores: scores,
       tricksTaken: _tricksTaken,
+      gameTied: _gameTied, // ← explicit
+      winnerIndex: _gameWinnerIndex, // number | null
+      tieIndexes: _gameTieIndexes ?? null,
     };
   };
 
@@ -659,20 +677,16 @@ export function createGameEngine(players) {
       }
     });
 
-    const scores = _players.map((p) => p.getScore());
-    const someoneOver100 = scores.some((s) => s >= 13);
-
-    if (someoneOver100) {
-      const lowestScore = Math.min(...scores);
-      _gameWinnerIndex = scores.indexOf(lowestScore);
-      _gameOver = true;
-    }
+    const scores = getScores();
+    updateGameOverAndPhase(scores);
 
     return {
       success: true,
       updatedScores: scores,
-      gameOver: _gameOver,
+      currentPhase: _currentPhase,
+      gameTied: _gameTied,
       winnerIndex: _gameWinnerIndex,
+      tieIndexes: _gameTieIndexes ?? null,
     };
   };
 
@@ -689,28 +703,18 @@ export function createGameEngine(players) {
       }
     });
 
-    const scores = _players.map((p) => p.getScore());
-    const someoneOver100 = scores.some((s) => s >= 13);
-
-    if (someoneOver100) {
-      const lowestScore = Math.min(...scores);
-      _gameWinnerIndex = scores.indexOf(lowestScore);
-      _gameOver = true;
-    }
+    const scores = getScores();
+    updateGameOverAndPhase(scores);
 
     return {
       success: true,
       updatedScores: scores,
-      gameOver: _gameOver,
+      currentPhase: _currentPhase,
+      gameTied: _gameTied,
       winnerIndex: _gameWinnerIndex,
+      tieIndexes: _gameTieIndexes ?? null,
     };
   };
-
-  engine.getGameWinnerIndex = () => _gameWinnerIndex;
-
-  engine.getTricksTaken = () => _tricksTaken.slice();
-
-  engine.getCurrentTrick = () => _currentTrick;
 
   return engine;
 }

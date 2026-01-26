@@ -1,4 +1,5 @@
 import { controller } from "./index.js";
+import { removeById } from "./rendererHelpers.js";
 
 export function renderPassUI(passDirection) {
   clearPassUI();
@@ -42,12 +43,10 @@ export function clearPassUI() {
   if (!passUI) return;
 
   // Remove pass message if it exists
-  const msg = document.getElementById("pass-message");
-  if (msg) msg.remove();
+  removeById("pass-message");
 
   // Remove pass slots container if it exists
-  const slots = document.getElementById("pass-slots");
-  if (slots) slots.remove();
+  removeById("pass-slots");
 }
 // allows click to send confirm pass (enter play phase) intent to dispatch
 export function renderPassBtn() {
@@ -88,8 +87,7 @@ export function renderPassError(message) {
 }
 
 export function clearPassError() {
-  const err = document.getElementById("pass-error");
-  if (err) err.remove();
+  removeById("pass-error");
 }
 // allows click on card in pass slot to send undo pass intent to dispatch
 export function renderCardInPassSlot(playerIndex, card) {

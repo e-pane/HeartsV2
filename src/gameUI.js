@@ -1,4 +1,5 @@
 import { controller } from "./index.js";
+import { removeById, clearElementById, clearPlayPassUI } from "./rendererHelpers.js";
 
 import moonImg from "./images/moon.png";
 import upArrowImg from "./images/up-arrow.png";
@@ -29,7 +30,7 @@ export function renderPlayHand(playerIndex, cards) {
   const handContainer = document.getElementById("player-hand");
   if (!handContainer) return;
 
-  handContainer.innerHTML = "";
+  clearElementById("player-hand");
 
   cards.forEach((card) => {
     const cardEl = document.createElement("img");
@@ -61,7 +62,7 @@ export function renderOpponentHands(playerIndexes) {
     const container = document.getElementById(handId);
     if (!container) return;
 
-    container.innerHTML = "";
+    clearElementById(handId);
 
     const img = document.createElement("img");
     img.src = cardBackPath;
@@ -81,7 +82,7 @@ export function renderPlayedCard({ playerIndex, card, undoable }) {
   const slot = document.getElementById(slotIds[playerIndex]);
   if (!slot) return;
 
-  slot.innerHTML = "";
+  clearElementById(slotIds[playerIndex]);
 
   const img = document.createElement("img");
   img.src = `/images/svg-cards/${card.svg}`;
@@ -106,8 +107,7 @@ export function renderPlayedCard({ playerIndex, card, undoable }) {
 
 export function removePlayedCard(playerIndex) {
   const slotIds = ["played1", "played2", "played3", "played4"];
-  const slot = document.getElementById(slotIds[playerIndex]);
-  if (slot) slot.innerHTML = "";
+  clearElementById(slotIds[playerIndex]);
 }
 
 export function disableUndoOnPlayedCards() {
@@ -142,17 +142,14 @@ export function removeClearTrickBtn() {
 
 export function clearPlayedCardSlots() {
   const slotIds = ["played1", "played2", "played3", "played4"];
-
-  slotIds.forEach((id) => {
-    const slot = document.getElementById(id);
-    if (slot) {
-      slot.innerHTML = "";
-    }
-  });
+  slotIds.forEach((id) => clearElementById(id));
 }
+
 export function renderHeartsBrokenMsg({ heartsBroken, trickNumber, plays }) {
   const container = document.getElementById("play-pass-ui");
-  container.innerHTML = ""; // clear any previous overlay
+  if (!container) return;
+
+  clearPlayPassUI();
 
   const overlay = document.createElement("div");
   overlay.classList.add("last-trick-overlay");
@@ -210,9 +207,10 @@ export function renderLastTrick(trick) {
   if (!trick) {
     return;
   }
-
   const container = document.getElementById("play-pass-ui");
-  container.innerHTML = ""; // clear any previous overlay
+  if (!container) return;
+  
+  clearPlayPassUI();
 
   const overlay = document.createElement("div");
   overlay.classList.add("last-trick-overlay");
@@ -257,16 +255,11 @@ export function renderLastTrick(trick) {
   container.appendChild(overlay);
 }
 
-export function clearPlayPassUI() {
-  const container = document.getElementById("play-pass-ui");
-  container.innerHTML = "";
-}
-
 export function renderMoonShotButtons(shooterPlayer, garySpecialMessage) {
+  clearPlayPassUI();
+
   const playPassUI = document.getElementById("play-pass-ui");
   if (!playPassUI) return;
-
-  playPassUI.innerHTML = "";
 
   const playerNameEl = document.createElement("div");
   playerNameEl.textContent = shooterPlayer.getName();
@@ -317,10 +310,10 @@ export function renderMoonShotButtons(shooterPlayer, garySpecialMessage) {
 }
 
 export function renderGameWinner(players, winnerIndex) {
+  clearPlayPassUI();
+
   const playPassUI = document.getElementById("play-pass-ui");
   if (!playPassUI) return;
-
-  playPassUI.innerHTML = "";
 
   const winner = players[winnerIndex];
 
@@ -349,18 +342,48 @@ export function renderGameWinner(players, winnerIndex) {
   playPassUI.appendChild(wrapper);
 }
 
+export function renderGameTie(players, tieIndexes) {
+  clearPlayPassUI();
+
+  const playPassUI = document.getElementById("play-pass-ui");
+  if (!playPassUI) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "winner-overlay";
+
+  const card = document.createElement("div");
+  card.className = "winner-card";
+
+  const title = document.createElement("div");
+  title.className = "winner-title";
+  title.textContent = "Game Over";
+
+  const name = document.createElement("div");
+  name.className = "winner-name";
+
+  // Build a nice tie display like "Alice, Bob, & Carol"
+  const tieNames = tieIndexes
+    .map((index) => players[index].getName())
+    .join(" & ");
+
+  name.textContent = tieNames;
+
+  const subtitle = document.createElement("div");
+  subtitle.className = "winner-subtitle";
+  subtitle.textContent = "are Co-Winners";
+
+  card.appendChild(title);
+  card.appendChild(name);
+  card.appendChild(subtitle);
+  wrapper.appendChild(card);
+  playPassUI.appendChild(wrapper);
+}
+
 export function renderNewGameBtn() {
   const container = document.getElementById("new-game-container");
+  if (!container) return;
 
-  // Guard clause
-  if (!container) {
-    console.error("renderNewGameBtn: new-game-container not found");
-    return;
-  }
-
-  container.innerHTML = `
-    <button class="new-game-btn">Start a New Game</button>
-  `;
+  clearElementById("new-game-container");
 
   const newGameBtn = document.createElement("button");
   newGameBtn.classList.add("new-game-btn");
@@ -374,10 +397,6 @@ export function renderNewGameBtn() {
 }
 
 export function clearNewGameBtn() {
-  console.log("clearNewGameBtn called");
-  const container = document.getElementById("new-game-container");
-  if (!container) return;
-
-  container.innerHTML = "";
+  clearElementById("new-game-container");
 }
 

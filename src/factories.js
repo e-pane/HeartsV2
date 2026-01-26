@@ -195,7 +195,6 @@ function createGame(players) {
   // Change game phase
   game.dealHands = () => _engine.dealHands();
   game.passSelectedCards = () => _engine.passSelectedCards();
-  game.startHand= () => _engine.startHand();
 
   // Play a card (UI calls this on click)
   game.playCard = (playerIndex, card) => _engine.playCard(playerIndex, card);
@@ -211,24 +210,9 @@ function createGame(players) {
   game.isFirstTrick = () => _engine.isFirstTrick();
   game.completeTrick = () => _engine.completeTrick();
 
-  // Expose state getters
-  game.getCurrentPlayer = () => _engine.getCurrentPlayer();
-  game.getCurrentPlayerIndex = () => _engine.getCurrentPlayerIndex();
   game.getPlayers = () => _engine.getPlayers();
-  game.getCurrentPhase = () => _engine.getCurrentPhase();
-  game.getPassDirection = () => _engine.getPassDirection();
-  game.getSelectedCardsForPass = () => _engine.getSelectedCardsForPass();
-  game.getCurrentTrick = () => _engine.getCurrentTrick();
-  game.getLastTrick = () => _engine.getLastTrick();
-  game.areHeartsBroken = () => _engine.areHeartsBroken();
-  game.getHeartsBrokenTrick = () => _engine.getHeartsBrokenTrick(); 
-  game.isTrickComplete = () => _engine.isTrickComplete();
-  game.isHandComplete = () => _engine.isHandComplete();
   game.finishHand = () => _engine.finishHand();
-  game.getScores = () => _engine.getScores();
-  game.getTricksTaken = () => _engine.getTricksTaken();
   game.canUndo = () => _engine.canUndo();
-
   game.moonShot = () => _engine.moonShot();
   game.everyoneUp26 = () => _engine.everyoneUp26();
   game.shooterDown26 = () => _engine.shooterDown26();

@@ -1,29 +1,30 @@
-dealHands
 
-PASS
+getters/setters cut in order:
 
-addCardForPass
+getCurrentPhase
 
-removeCardForPass
+setCurrentPhase
 
-passSelectedCards (implicit but required to exit PASS)
+getPassDirection
 
-PLAY
+getCurrentPlayer
 
-playCard
+getCurrentPlayerIndex
 
-undoLastPlay
+areHeartsBroken
 
-completeTrick (internal but phase-relevant)
+getHeartsBrokenTrick
 
-HAND_RESOLUTION
+getLastPlay
 
-finishHand
+isTurnSuspended
 
-everyoneUp26
+getLastTrick
 
-shooterDown26
+isHandComplete
 
-GAME_OVER
+getGameWinnerIndex
 
-newGame only
+getTricksTaken
+
+getCurrentTrick

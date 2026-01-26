@@ -1,12 +1,12 @@
 import { controller } from "./index.js";
+import { removeById } from "./rendererHelpers.js";
 
 export function renderWaitingMessage() {
   const container = document.querySelector(".middle-center"); // or a dedicated message div
   if (!container) return;
 
   // Clear any existing message first
-  const existingMsg = document.getElementById("waiting-message");
-  if (existingMsg) existingMsg.remove();
+  removeById("waiting-message");
 
   const p = document.createElement("p");
   p.id = "waiting-message";
@@ -15,8 +15,7 @@ export function renderWaitingMessage() {
 }
 
 export function removeWaitingMessage() {
-  const existingMsg = document.getElementById("waiting-message");
-  if (existingMsg) existingMsg.remove();
+  removeById("waiting-message");
 }
 
 export function renderPlayerNames(players, tricksTaken) {
@@ -38,10 +37,6 @@ export function renderPlayerNames(players, tricksTaken) {
 }
 
 export function renderPlayerNamesInScoreTable(players, source) {
-  console.log(
-    "player scores from getScore():",
-    players.map((p) => p.getScore()),
-  );
   players.forEach((player, index) => {
     const th = document.querySelector(
       `.score-table th:nth-child(${index + 1})`,
